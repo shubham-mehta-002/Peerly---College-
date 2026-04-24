@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peerly — Design Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --background: #FAFAF8; --foreground: #1A1917; --muted: #706E69;
+    --accent: #2D6A4F; --border: #E2E0DA; --card: #F4F3EF;
+  }
+  .dark {
+    --background: #141412; --foreground: #F0EEE8; --muted: #9E9B95;
+    --accent: #4CAF7D; --border: #2E2D2A; --card: #1E1D1B;
+  }
+  html, body, #root { height: 100%; }
+  body { font-family: 'Inter', sans-serif; font-size: 15px; color: var(--foreground); -webkit-font-smoothing: antialiased; background: #0D0D0C; }
+  button { font-family: 'Inter', sans-serif; }
+  textarea, input { font-family: 'Inter', sans-serif; }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useContext, createContext } = React;
+
+// ── Tweaks defaults ───────────────────────────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "cardLayout": "open",
+  "anonStyle": "badge",
+  "accentColor": "sage"
+}/*EDITMODE-END*/;
+
+// ── Context ───────────────────────────────────────────────────────────────────
+const TweaksContext = createContext({});
+const useTweaks = () => useContext(TweaksContext);
+
+// ── Sample Data ───────────────────────────────────────────────────────────────
+const SAMPLE_POSTS = [
+  { id: 1, author: 'Aryan Mehta', anon: false, time: '2h ago', content: 'The new library extension hours are a game changer. Finally can stay past 10pm for exams 🙌', upvotes: 47, comments: 12, hasImage: false, trending: true, global: false },
+  { id: 2, author: '?', anon: true, time: '4h ago', content: 'Hot take: the canteen food has gotten significantly worse this semester. The dal is basically water now. Anyone else notice this?', upvotes: 134, comments: 38, hasImage: false, trending: true, global: false },
+  { id: 3, author: 'Priya Nair', anon: false, time: '6h ago', content: 'Just got my internship offer from Zepto! For anyone prepping for product roles, happy to share notes from my interview prep.', upvotes: 89, comments: 24, hasImage: false, trending: false, global: false },
+  { id: 4, author: '?', anon: true, time: '1d ago', content: 'WiFi in Block C hostels is unusable after 11pm. Raised a ticket 3 weeks ago, zero response. This is the third semester in a row.', upvotes: 203, comments: 56, hasImage: false, trending: false, global: false },
+  { id: 5, author: 'Kabir Sharma', anon: false, time: '1d ago', content: 'Quick reminder: the cultural fest sponsorship applications close this Friday. Link in bio.', upvotes: 31, comments: 7, hasImage: true, trending: false, global: true },
+];
+const SAMPLE_COMMUNITIES = [
+  { id: 1, name: 'CSE Batch 2022', desc: 'Academic discussions, placement prep, exam notes', members: 187, category: 'Technical' },
+  { id: 2, name: 'Coding Club TIET', desc: 'Competitive programming, hackathons, project collabs', members: 143, category: 'Technical' },
+  { id: 3, name: 'Culturals Core Team', desc: 'Official fest coordination and volunteer management', members: 68, category: 'Cultural' },
+  { id: 4, name: 'Football League', desc: 'Inter-hostel matches, training sessions, tournaments', members: 112, category: 'Sports' },
+  { id: 5, name: 'Anonymous Confessions', desc: 'A safe space. All posts are anonymous by default.', members: 198, category: 'Cultural' },
+];
+const SAMPLE_MESSAGES = [
+  { id: 1, author: 'Priya Nair', text: 'Hey everyone, the placement drive for TCS is confirmed for Nov 15th', time: '10:02', mine: false },
+  { id: 2, author: 'Rahul Singh', text: 'Is it for all branches or just CS/IT?', time: '10:04', mine: false },
+  { id: 3, author: 'You', text: 'The notice said CS, IT and ECE eligible. Min 7.0 CGPA', time: '10:06', mine: true },
+  { id: 4, author: 'Priya Nair', text: 'Thanks for checking! Anyone have the registration link?', time: '10:07', mine: false },
+  { id: 5, author: 'Aryan Mehta', text: 'Just shared it in the pinned message above ↑', time: '10:09', mine: false },
+  { id: 6, author: 'You', text: 'Good luck everyone 🤞', time: '10:11', mine: true },
+];
+
+// ── Shared Components ─────────────────────────────────────────────────────────
+
+function Avatar({ name = '?', src, size = 32, anon = false }) {
+  const { anonStyle } = useTweaks();
+  const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const s = { width: size, height: size, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 };
+  if (anon) return <div style={{ ...s, background: 'var(--border)', color: 'var(--muted)', fontSize: size * 0.4 }}>—</div>;
+  if (src) return <img src={src} alt={name} style={{ ...s, objectFit: 'cover' }} />;
+  return <div style={{ ...s, background: 'var(--accent)', color: '#fff', fontSize: size * 0.38 }}>{initials}</div>;
+}
+
+function Btn({ children, variant = 'primary', size = 'md', onClick, style: ext, disabled }) {
+  const sizes = { sm: { padding: '6px 12px', fontSize: 13 }, md: { padding: '10px 18px', fontSize: 14 }, lg: { padding: '13px 24px', fontSize: 15 } };
+  const variants = {
+    primary: { background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8 },
+    secondary: { background: 'var(--card)', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: 8 },
+    ghost: { background: 'transparent', color: 'var(--muted)', border: 'none', borderRadius: 8 },
+    danger: { background: 'transparent', color: '#C0392B', border: '1px solid #C0392B', borderRadius: 8 },
+  };
+  return (
+    <button onClick={onClick} disabled={disabled}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: disabled ? 'default' : 'pointer', fontFamily: 'inherit', fontWeight: 500, transition: 'opacity .15s', opacity: disabled ? 0.45 : 1, ...sizes[size], ...variants[variant], ...ext }}>
+      {children}
+    </button>
+  );
+}
+
+function Input({ label, placeholder, type = 'text', value, onChange, hint, error, multiline, rows = 3 }) {
+  const inputStyle = { width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: 'var(--background)', border: `1px solid ${error ? '#C0392B' : 'var(--border)'}`, borderRadius: 8, fontSize: 14, color: 'var(--foreground)', fontFamily: 'inherit', outline: 'none', resize: multiline ? 'vertical' : undefined };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {label && <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>{label}</label>}
+      {multiline ? <textarea style={inputStyle} placeholder={placeholder} value={value} onChange={onChange} rows={rows} /> : <input style={inputStyle} type={type} placeholder={placeholder} value={value} onChange={onChange} />}
+      {hint && !error && <span style={{ fontSize: 12, color: 'var(--muted)' }}>{hint}</span>}
+      {error && <span style={{ fontSize: 12, color: '#C0392B' }}>{error}</span>}
+    </div>
+  );
+}
+
+function Divider() { return <div style={{ height: 1, background: 'var(--border)' }} />; }
+
+function AnonLabel({ scope = 'campus' }) {
+  const { anonStyle } = useTweaks();
+  const text = scope === 'global' ? 'Anonymous @ Thapar University' : 'Anonymous Peer';
+  if (anonStyle === 'badge') return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 8px', borderRadius: 999, background: 'var(--card)', border: '1px solid var(--border)', fontSize: 12, fontWeight: 500, color: 'var(--muted)' }}><span style={{ opacity: 0.6 }}>◯</span> {text}</span>;
+  if (anonStyle === 'ghost') return <span style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic' }}>{text}</span>;
+  return <span style={{ fontSize: 13, color: 'var(--muted)' }}>{text}</span>;
+}
+
+function PostCard({ post, onClick }) {
+  const { cardLayout } = useTweaks();
+  const [voted, setVoted] = useState(null);
+  const cardStyles = {
+    open:     { background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', borderRadius: 0, padding: '20px 0' },
+    bordered: { background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 10, padding: '18px 20px', marginBottom: 2 },
+    filled:   { background: 'var(--card)', border: 'none', borderRadius: 10, padding: '18px 20px', marginBottom: 2 },
+  };
+  return (
+    <div style={{ ...cardStyles[cardLayout], cursor: 'pointer' }} onClick={onClick}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <Avatar name={post.anon ? '?' : post.author} size={34} anon={post.anon} />
+        <div>
+          {post.anon ? <AnonLabel scope={post.global ? 'global' : 'campus'} /> : <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{post.author}</span>}
+          <div style={{ display: 'flex', gap: 6, marginTop: 1 }}>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>{post.time}</span>
+            {post.global && <span style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 500 }}>Global</span>}
+          </div>
+        </div>
+      </div>
+      <p style={{ margin: '0 0 10px', fontSize: 15, lineHeight: 1.6, color: 'var(--foreground)' }}>{post.content}</p>
+      {post.hasImage && <div style={{ width: '100%', height: 180, background: 'var(--border)', borderRadius: 8, marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 12, color: 'var(--muted)' }}>post image</span></div>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <button onClick={e => { e.stopPropagation(); setVoted(voted === 'up' ? null : 'up'); }} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: voted === 'up' ? 'var(--accent)' : 'var(--muted)', fontSize: 13, padding: 0, fontFamily: 'inherit' }}>↑ {post.upvotes + (voted === 'up' ? 1 : 0)}</button>
+        <button onClick={e => { e.stopPropagation(); setVoted(voted === 'down' ? null : 'down'); }} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: voted === 'down' ? '#C0392B' : 'var(--muted)', fontSize: 13, padding: 0, fontFamily: 'inherit' }}>↓</button>
+        <span style={{ color: 'var(--muted)', fontSize: 13 }}>💬 {post.comments}</span>
+        {post.trending && <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Trending</span>}
+      </div>
+    </div>
+  );
+}
+
+function AppNav({ screen, setScreen }) {
+  return (
+    <nav style={{ height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '3px 24px', borderBottom: '1px solid var(--border)', background: 'var(--background)', position: 'sticky', top: 0, zIndex: 10, flexShrink: 0 }}>
+      <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)', letterSpacing: '-0.3px' }}>Peerly</span>
+      <div style={{ display: 'flex', gap: 24 }}>
+        {[['campus-feed','Feed'],['communities','Communities'],['profile','Profile']].map(([id, label]) => (
+          <button key={id} onClick={() => setScreen(id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: screen === id ? 600 : 400, color: screen === id ? 'var(--foreground)' : 'var(--muted)', padding: 0 }}>{label}</button>
+        ))}
+      </div>
+      <button onClick={() => setScreen('create-post')} style={{ background: 'var(--accent)', border: 'none', color: '#fff', fontSize: 12, fontWeight: 600, padding: '0 18px', height: 30, borderRadius: 7, cursor: 'pointer', fontFamily: 'inherit' }}>+ Post</button>
+    </nav>
+  );
+}
+
+function ContentShell({ children, maxWidth = 660, withNav = true, screen, setScreen }) {
+  return (
+    <div style={{ background: 'var(--background)', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
+      {withNav && <AppNav screen={screen} setScreen={setScreen} />}
+      <div style={{ maxWidth, margin: '0 auto', width: '100%', padding: '32px 24px', boxSizing: 'border-box', flex: 1 }}>{children}</div>
+    </div>
+  );
+}
+
+// ── Auth Screens ──────────────────────────────────────────────────────────────
+
+function LoginScreen({ setScreen }) {
+  const [tab, setTab] = useState('login');
+  const GoogleIcon = () => <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>;
+  return (
+    <div style={{ minHeight: '100%', background: 'var(--background)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
+      <div style={{ marginBottom: 48, textAlign: 'center' }}>
+        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--foreground)', letterSpacing: '-0.5px', marginBottom: 6 }}>Peerly</div>
+        <div style={{ fontSize: 14, color: 'var(--muted)' }}>Your campus, your community.</div>
+      </div>
+      <div style={{ width: '100%', maxWidth: 400, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border)' }}>
+          {['login','signup'].map(t => (
+            <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: 14, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: tab === t ? 600 : 400, color: tab === t ? 'var(--foreground)' : 'var(--muted)', borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent', marginBottom: -1 }}>
+              {t === 'login' ? 'Sign in' : 'Create account'}
+            </button>
+          ))}
+        </div>
+        <div style={{ padding: 28 }}>
+          {tab === 'login' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <Input label="College email" placeholder="yourname@thapar.edu" type="email" />
+              <Input label="Password" placeholder="••••••••" type="password" />
+              <div style={{ textAlign: 'right', marginTop: -8 }}>
+                <button onClick={() => setScreen('forgot-password')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--accent)', fontFamily: 'inherit', padding: 0 }}>Forgot password?</button>
+              </div>
+              <Btn onClick={() => setScreen('campus-feed')} style={{ width: '100%', justifyContent: 'center' }}>Sign in</Btn>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ flex: 1, height: 1, background: 'var(--border)' }} /><span style={{ fontSize: 12, color: 'var(--muted)' }}>or</span><div style={{ flex: 1, height: 1, background: 'var(--border)' }} /></div>
+              <Btn variant="secondary" style={{ width: '100%', justifyContent: 'center' }}><GoogleIcon /> Continue with Google</Btn>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ padding: '10px 14px', background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>Only college-issued email addresses are accepted. Personal Gmail accounts are not supported.</div>
+              <Input label="College email" placeholder="yourname@thapar.edu" type="email" />
+              <Input label="Password" placeholder="Min. 8 characters" type="password" />
+              <Input label="Confirm password" placeholder="••••••••" type="password" />
+              <Btn onClick={() => setScreen('onboarding')} style={{ width: '100%', justifyContent: 'center' }}>Create account</Btn>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ flex: 1, height: 1, background: 'var(--border)' }} /><span style={{ fontSize: 12, color: 'var(--muted)' }}>or</span><div style={{ flex: 1, height: 1, background: 'var(--border)' }} /></div>
+              <Btn variant="secondary" style={{ width: '100%', justifyContent: 'center' }}><GoogleIcon /> Continue with Google</Btn>
+            </div>
+          )}
+        </div>
+      </div>
+      <p style={{ marginTop: 28, fontSize: 12, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.6, maxWidth: 320 }}>By signing up you agree to our Terms of Service. Peerly is exclusively for students of whitelisted institutions.</p>
+    </div>
+  );
+}
+
+function OnboardingScreen({ setScreen }) {
+  const [step, setStep] = useState(0);
+  const [campus, setCampus] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernameState, setUsernameState] = useState(null);
+  const steps = ['Campus', 'Profile', 'Done'];
+  const checkUsername = (val) => {
+    setUsername(val);
+    if (val.length < 3) { setUsernameState(null); return; }
+    setUsernameState('checking');
+    setTimeout(() => setUsernameState(val === 'taken' ? 'taken' : 'available'), 600);
+  };
+  return (
+    <div style={{ minHeight: '100%', background: 'var(--background)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
+      <div style={{ width: '100%', maxWidth: 480 }}>
+        <div style={{ marginBottom: 36, textAlign: 'center' }}><div style={{ fontSize: 22, fontWeight: 700, color: 'var(--foreground)', letterSpacing: '-0.5px' }}>Peerly</div></div>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 36 }}>
+          {steps.map((s, i) => (
+            <React.Fragment key={s}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, background: i <= step ? 'var(--accent)' : 'var(--border)', color: i <= step ? '#fff' : 'var(--muted)', transition: 'all .25s' }}>{i < step ? '✓' : i + 1}</div>
+                <span style={{ fontSize: 11, color: i <= step ? 'var(--foreground)' : 'var(--muted)', fontWeight: i === step ? 600 : 400, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{s}</span>
+              </div>
+              {i < steps.length - 1 && <div style={{ flex: 2, height: 1, background: i < step ? 'var(--accent)' : 'var(--border)', marginBottom: 22, transition: 'background .25s' }} />}
+            </React.Fragment>
+          ))}
+        </div>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: '32px 28px' }}>
+          {step === 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div><h2 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 600, color: 'var(--foreground)' }}>Select your campus</h2><p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.5 }}>Your campus is locked after setup and determines which content you see.</p></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {['Thapar Institute — Patiala','Thapar Institute — Derabassi'].map(c => (
+                  <button key={c} onClick={() => setCampus(c)} style={{ textAlign: 'left', padding: '14px 16px', borderRadius: 8, border: `1px solid ${campus === c ? 'var(--accent)' : 'var(--border)'}`, background: campus === c ? 'rgba(45,106,79,.07)' : 'var(--background)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, color: 'var(--foreground)', fontWeight: campus === c ? 600 : 400 }}>{c}</button>
+                ))}
+              </div>
+              <Btn disabled={!campus} onClick={() => setStep(1)} style={{ alignSelf: 'flex-end' }}>Continue →</Btn>
+            </div>
+          )}
+          {step === 1 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <div><h2 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 600, color: 'var(--foreground)' }}>Set up your profile</h2><p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>You can always update this later.</p></div>
+              <Input label="Full name" placeholder="Priya Sharma" />
+              <Input label="Username" placeholder="priya.sharma" value={username} onChange={e => checkUsername(e.target.value)}
+                hint={usernameState === 'available' ? '✓ Username is available' : usernameState === 'checking' ? 'Checking…' : 'Globally unique — how others find you'}
+                error={usernameState === 'taken' ? 'This username is taken' : ''} />
+              <Input label="Bio" placeholder="2nd year CSE, loves football and bad puns" multiline rows={2} />
+              <Input label="Course (optional)" placeholder="B.Tech Computer Science" />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                <Btn variant="ghost" onClick={() => setStep(0)}>← Back</Btn>
+                <Btn onClick={() => setStep(2)}>Save & Continue →</Btn>
+              </div>
+            </div>
+          )}
+          {step === 2 && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, textAlign: 'center', padding: '12px 0' }}>
+              <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, color: '#fff' }}>✓</div>
+              <div><h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 600, color: 'var(--foreground)' }}>You're in.</h2><p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.6 }}>Welcome to Peerly. Your campus feed is ready — posts from {campus || 'your campus'} are waiting.</p></div>
+              <Btn onClick={() => setScreen('campus-feed')} size="lg" style={{ marginTop: 8 }}>Go to my feed →</Btn>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ForgotPasswordScreen({ setScreen }) {
+  const [sent, setSent] = useState(false);
+  const [email, setEmail] = useState('');
+  return (
+    <div style={{ minHeight: '100%', background: 'var(--background)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
+      <div style={{ width: '100%', maxWidth: 400 }}>
+        <button onClick={() => setScreen('login')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, color: 'var(--muted)', padding: 0, marginBottom: 36 }}>← Back to sign in</button>
+        {!sent ? (
+          <>
+            <div style={{ marginBottom: 28 }}>
+              <h1 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 600, color: 'var(--foreground)', letterSpacing: '-0.3px' }}>Reset your password</h1>
+              <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.6 }}>Enter your college email and we'll send a reset link. Check your spam folder if it doesn't arrive in a few minutes.</p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <Input label="College email" placeholder="yourname@thapar.edu" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+              <Btn disabled={!email.trim()} onClick={() => setSent(true)} style={{ width: '100%', justifyContent: 'center' }}>Send reset link</Btn>
+            </div>
+          </>
+        ) : (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--card)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, margin: '0 auto 20px' }}>✉</div>
+            <h1 style={{ margin: '0 0 10px', fontSize: 20, fontWeight: 600, color: 'var(--foreground)' }}>Check your inbox</h1>
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--muted)', lineHeight: 1.65 }}>We sent a reset link to <strong style={{ color: 'var(--foreground)' }}>{email}</strong>. Expires in 30 minutes.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <Btn variant="secondary" onClick={() => setSent(false)} style={{ width: '100%', justifyContent: 'center' }}>Resend email</Btn>
+              <button onClick={() => setScreen('login')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, color: 'var(--muted)', textDecoration: 'underline', textUnderlineOffset: 3 }}>Back to sign in</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ResetPasswordScreen({ setScreen }) {
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [done, setDone] = useState(false);
+  const mismatch = confirm.length > 0 && password !== confirm;
+  const weak = password.length > 0 && password.length < 8;
+  const strength = password.length === 0 ? 0 : password.length < 8 ? 1 : password.length < 12 ? 2 : 3;
+  const strengthColors = ['', '#C0392B', '#E67E22', 'var(--accent)'];
+  const strengthLabels = ['', 'Weak', 'Good', 'Strong'];
+  return (
+    <div style={{ minHeight: '100%', background: 'var(--background)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
+      <div style={{ width: '100%', maxWidth: 400 }}>
+        {!done ? (
+          <>
+            <div style={{ marginBottom: 28 }}>
+              <h1 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 600, color: 'var(--foreground)', letterSpacing: '-0.3px' }}>Choose a new password</h1>
+              <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.6 }}>Pick something you haven't used before. Min. 8 characters.</p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <Input label="New password" type="password" placeholder="Min. 8 characters" value={password} onChange={e => setPassword(e.target.value)} error={weak ? 'Password must be at least 8 characters' : ''} />
+                {password.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ flex: 1, display: 'flex', gap: 3 }}>
+                      {[1,2,3].map(i => <div key={i} style={{ flex: 1, height: 3, borderRadius: 99, background: i <= strength ? strengthColors[strength] : 'var(--border)', transition: 'background .2s' }} />)}
+                    </div>
+                    <span style={{ fontSize: 12, color: strengthColors[strength], fontWeight: 500, minWidth: 40 }}>{strengthLabels[strength]}</span>
+                  </div>
+                )}
+              </div>
+              <Input label="Confirm password" type="password" placeholder="••••••••" value={confirm} onChange={e => setConfirm(e.target.value)} error={mismatch ? "Passwords don't match" : ''} />
+              <Btn disabled={!password || !confirm || mismatch || weak} onClick={() => setDone(true)} style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}>Set new password</Btn>
+            </div>
+          </>
+        ) : (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color: '#fff', margin: '0 auto 20px' }}>✓</div>
+            <h1 style={{ margin: '0 0 10px', fontSize: 20, fontWeight: 600, color: 'var(--foreground)' }}>Password updated</h1>
+            <p style={{ margin: '0 0 28px', fontSize: 14, color: 'var(--muted)', lineHeight: 1.65 }}>You're all set. Sign in with your new password.</p>
+            <Btn onClick={() => setScreen('login')} style={{ width: '100%', justifyContent: 'center' }}>Back to sign in</Btn>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Feed Screens ──────────────────────────────────────────────────────────────
+
+function FeedScreen({ setScreen, global: isGlobal }) {
+  const [activeFilter, setActiveFilter] = useState('Trending');
+  const { cardLayout } = useTweaks();
+  const feedTab = isGlobal ? 'global' : 'campus';
+  const filters = ['Trending', 'Latest', 'Oldest', 'Most Upvoted'];
+  return (
+    <ContentShell withNav screen={isGlobal ? 'global-feed' : 'campus-feed'} setScreen={setScreen}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: 24, marginTop: -8 }}>
+        {[['campus','Campus Feed'],['global','Global Feed']].map(([id, label]) => (
+          <button key={id} onClick={() => setScreen(id === 'campus' ? 'campus-feed' : 'global-feed')}
+            style={{ padding: '12px 0', marginRight: 28, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: feedTab === id ? 600 : 400, color: feedTab === id ? 'var(--foreground)' : 'var(--muted)', borderBottom: feedTab === id ? '2px solid var(--foreground)' : '2px solid transparent', marginBottom: -1 }}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+        {filters.map(f => <button key={f} onClick={() => setActiveFilter(f)} style={{ padding: '5px 12px', borderRadius: 999, border: `1px solid ${activeFilter === f ? 'var(--accent)' : 'var(--border)'}`, background: activeFilter === f ? 'var(--accent)' : 'transparent', color: activeFilter === f ? '#fff' : 'var(--muted)', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>{f}</button>)}
+      </div>
+      <div style={cardLayout === 'open' ? {} : { display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {SAMPLE_POSTS.map(post => <PostCard key={post.id} post={post} onClick={() => setScreen('post-detail')} />)}
+      </div>
+    </ContentShell>
+  );
+}
+
+function PostDetailScreen({ setScreen }) {
+  const [comment, setComment] = useState('');
+  const comments = [
+    { id: 1, author: 'Rohit Verma', anon: false, time: '3h ago', text: 'Completely agree. Had dal today — tasted like warm water with a yellow tint.', upvotes: 22, depth: 0 },
+    { id: 2, author: '?', anon: true, time: '2h ago', text: 'To be fair, it was decent last week. Maybe a one-off bad day?', upvotes: 4, depth: 1 },
+    { id: 3, author: 'Sneha Iyer', anon: false, time: '2h ago', text: 'No it has been consistently bad since August. Someone should escalate to the mess committee.', upvotes: 31, depth: 1 },
+    { id: 4, author: 'Aryan Mehta', anon: false, time: '1h ago', text: 'Already raised it. The committee says "vendor issue." Been saying that for 2 months.', upvotes: 18, depth: 2 },
+    { id: 5, author: '?', anon: true, time: '45m ago', text: 'I just bring Maggi from my room at this point 💀', upvotes: 67, depth: 0 },
+  ];
+  return (
+    <ContentShell withNav screen="campus-feed" setScreen={setScreen}>
+      <button onClick={() => setScreen('campus-feed')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, color: 'var(--muted)', padding: 0, marginBottom: 24 }}>← Back to feed</button>
+      <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: 24, marginBottom: 28 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <Avatar name="?" size={38} anon />
+          <div><AnonLabel scope="campus" /><div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>4h ago</div></div>
+        </div>
+        <p style={{ margin: '0 0 16px', fontSize: 17, lineHeight: 1.65, color: 'var(--foreground)' }}>Hot take: the canteen food has gotten significantly worse this semester. The dal is basically water now. Anyone else notice this?</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', fontSize: 14, fontWeight: 600, padding: 0, fontFamily: 'inherit' }}>↑ 134</button>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 14, padding: 0, fontFamily: 'inherit' }}>↓</button>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>38 comments</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Trending</span>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 32 }}>
+        <Avatar name="You" size={32} />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Add a comment…" style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, color: 'var(--foreground)', fontFamily: 'inherit', outline: 'none', resize: 'none', minHeight: 72 }} />
+          {comment && <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}><Btn variant="ghost" size="sm" onClick={() => setComment('')}>Cancel</Btn><Btn size="sm">Post</Btn></div>}
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {comments.map((c, i) => (
+          <div key={c.id} style={{ display: 'flex', gap: 12, paddingLeft: c.depth * 28, paddingTop: 16, paddingBottom: 16, borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
+            <Avatar name={c.anon ? '?' : c.author} size={30} anon={c.anon} />
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 5 }}>
+                {c.anon ? <AnonLabel scope="campus" /> : <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{c.author}</span>}
+                <span style={{ fontSize: 12, color: 'var(--muted)' }}>{c.time}</span>
+              </div>
+              <p style={{ margin: '0 0 8px', fontSize: 14, lineHeight: 1.6, color: 'var(--foreground)' }}>{c.text}</p>
+              <div style={{ display: 'flex', gap: 14 }}>
+                <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--muted)', fontFamily: 'inherit', padding: 0 }}>↑ {c.upvotes}</button>
+                <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--muted)', fontFamily: 'inherit', padding: 0 }}>Reply</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </ContentShell>
+  );
+}
+
+function CreatePostScreen({ setScreen }) {
+  const [content, setContent] = useState('');
+  const [isAnon, setIsAnon] = useState(false);
+  const [isGlobal, setIsGlobal] = useState(false);
+  const charLimit = 500;
+  const toggles = [
+    { label: 'Post anonymously', sub: "Your name won't be shown", val: isAnon, set: setIsAnon },
+    { label: 'Share globally', sub: 'Visible to all whitelisted campuses', val: isGlobal, set: setIsGlobal },
+  ];
+  return (
+    <ContentShell withNav screen="campus-feed" setScreen={setScreen} maxWidth={600}>
+      <button onClick={() => setScreen('campus-feed')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, color: 'var(--muted)', padding: 0, marginBottom: 24 }}>← Cancel</button>
+      <h1 style={{ margin: '0 0 28px', fontSize: 22, fontWeight: 600, color: 'var(--foreground)', letterSpacing: '-0.3px' }}>New post</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <Avatar name={isAnon ? '?' : 'You'} size={38} anon={isAnon} />
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>{isAnon ? <AnonLabel scope={isGlobal ? 'global' : 'campus'} /> : 'You'}</div>
+          <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{isGlobal ? 'Visible globally' : 'Thapar, Patiala'}</div>
+        </div>
+      </div>
+      <textarea value={content} onChange={e => setContent(e.target.value.slice(0, charLimit))} placeholder="What's on your mind?"
+        style={{ width: '100%', boxSizing: 'border-box', padding: '14px 0', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', fontSize: 16, lineHeight: 1.65, color: 'var(--foreground)', fontFamily: 'inherit', outline: 'none', resize: 'none', minHeight: 140 }} />
+      <div style={{ textAlign: 'right', fontSize: 12, color: content.length > charLimit * 0.85 ? '#C0392B' : 'var(--muted)', marginTop: 6, marginBottom: 20 }}>{charLimit - content.length}</div>
+      <div style={{ border: '1px dashed var(--border)', borderRadius: 10, padding: 20, textAlign: 'center', marginBottom: 24, cursor: 'pointer', background: 'var(--card)' }}>
+        <div style={{ fontSize: 20, marginBottom: 6, opacity: 0.5 }}>+</div>
+        <div style={{ fontSize: 13, color: 'var(--muted)' }}>Drag images here, or click to browse</div>
+        <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4, opacity: 0.7 }}>Up to 4 images · max 1 MB each (auto-compressed)</div>
+      </div>
+      <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', marginBottom: 28 }}>
+        {toggles.map((item, i) => (
+          <div key={item.label} onClick={() => item.set(!item.val)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', cursor: 'pointer', background: 'var(--background)', borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
+            <div><div style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)' }}>{item.label}</div><div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{item.sub}</div></div>
+            <div style={{ width: 40, height: 22, borderRadius: 999, background: item.val ? 'var(--accent)' : 'var(--border)', position: 'relative', flexShrink: 0 }}>
+              <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: item.val ? 21 : 3, transition: 'left .2s' }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Btn disabled={!content.trim()} size="lg" onClick={() => setScreen('campus-feed')}>Publish post</Btn>
+      </div>
+    </ContentShell>
+  );
+}
+
+// ── Community Screens ─────────────────────────────────────────────────────────
+
+function CommunitiesScreen({ setScreen }) {
+  const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState('discover');
+  const [activeCat, setActiveCat] = useState('All');
+  const cats = ['All','Technical','Cultural','Sports'];
+  const filtered = SAMPLE_COMMUNITIES.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) && (activeCat === 'All' || c.category === activeCat));
+  return (
+    <ContentShell withNav screen="communities" setScreen={setScreen}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div><h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 600, color: 'var(--foreground)', letterSpacing: '-0.3px' }}>Communities</h1><p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>Thapar Institute, Patiala</p></div>
+        <Btn size="sm">+ New</Btn>
+      </div>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: 20 }}>
+        {[['discover','Discover'],['joined','Joined (3)']].map(([id, label]) => (
+          <button key={id} onClick={() => setActiveTab(id)} style={{ padding: '10px 0', marginRight: 24, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: activeTab === id ? 600 : 400, color: activeTab === id ? 'var(--foreground)' : 'var(--muted)', borderBottom: activeTab === id ? '2px solid var(--foreground)' : '2px solid transparent', marginBottom: -1 }}>{label}</button>
+        ))}
+      </div>
+      <div style={{ position: 'relative', marginBottom: 16 }}>
+        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', pointerEvents: 'none' }}>⌕</span>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search communities…" style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px 9px 32px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, color: 'var(--foreground)', fontFamily: 'inherit', outline: 'none' }} />
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+        {cats.map(c => <button key={c} onClick={() => setActiveCat(c)} style={{ padding: '4px 12px', borderRadius: 999, border: `1px solid ${activeCat === c ? 'var(--accent)' : 'var(--border)'}`, background: activeCat === c ? 'var(--accent)' : 'transparent', color: activeCat === c ? '#fff' : 'var(--muted)', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>{c}</button>)}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {filtered.map((c, i) => (
+          <div key={c.id} onClick={() => setScreen('chat')} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 0', borderTop: i > 0 ? '1px solid var(--border)' : 'none', cursor: 'pointer' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--card)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+              {c.category === 'Technical' ? '⌨' : c.category === 'Cultural' ? '♪' : '⚽'}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>{c.name}</span>
+                <span style={{ fontSize: 11, color: 'var(--muted)', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 4, padding: '1px 6px' }}>{c.category}</span>
+              </div>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.desc}</p>
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{c.members}</div>
+              <div style={{ fontSize: 11, color: 'var(--muted)' }}>members</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </ContentShell>
+  );
+}
+
+function ChatScreen({ setScreen }) {
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState(SAMPLE_MESSAGES);
+  const bottomRef = useRef(null);
+  useEffect(() => { if (bottomRef.current) bottomRef.current.scrollTop = bottomRef.current.scrollHeight; }, [messages]);
+  const send = () => {
+    if (!input.trim()) return;
+    setMessages(prev => [...prev, { id: Date.now(), author: 'You', text: input, time: 'now', mine: true }]);
+    setInput('');
+  };
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--background)' }}>
+      <div style={{ height: 52, display: 'flex', alignItems: 'center', gap: 12, padding: '0 20px', borderBottom: '1px solid var(--border)', background: 'var(--background)', flexShrink: 0 }}>
+        <button onClick={() => setScreen('communities')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 18, padding: 0, lineHeight: 1 }}>←</button>
+        <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>CSE Batch 2022</div><div style={{ fontSize: 12, color: 'var(--muted)' }}>187 members</div></div>
+        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 18, padding: 0 }}>⋯</button>
+      </div>
+      <div style={{ padding: '10px 20px', background: 'var(--card)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--accent)', flexShrink: 0 }}>Pinned</span>
+        <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Registration link for TCS placement drive: docs.thapar.edu/tcs-nov15</p>
+      </div>
+      <div ref={bottomRef} style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Today</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        </div>
+        {messages.map((msg, i) => {
+          const showHeader = i === 0 || messages[i-1].author !== msg.author || messages[i-1].mine !== msg.mine;
+          return (
+            <div key={msg.id} style={{ display: 'flex', flexDirection: msg.mine ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 10 }}>
+              {!msg.mine && showHeader && <Avatar name={msg.author} size={28} />}
+              {!msg.mine && !showHeader && <div style={{ width: 28, flexShrink: 0 }} />}
+              <div style={{ maxWidth: '72%' }}>
+                {showHeader && !msg.mine && <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 4, paddingLeft: 2 }}>{msg.author}</div>}
+                <div style={{ padding: '10px 14px', borderRadius: msg.mine ? '14px 14px 4px 14px' : '14px 14px 14px 4px', background: msg.mine ? 'var(--accent)' : 'var(--card)', border: msg.mine ? 'none' : '1px solid var(--border)', color: msg.mine ? '#fff' : 'var(--foreground)', fontSize: 14, lineHeight: 1.5 }}>{msg.text}</div>
+                <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 3, textAlign: msg.mine ? 'right' : 'left' }}>{msg.time}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--background)', display: 'flex', gap: 10, alignItems: 'flex-end', flexShrink: 0 }}>
+        <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Message…" rows={1}
+          style={{ flex: 1, boxSizing: 'border-box', padding: '10px 14px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 22, fontSize: 14, color: 'var(--foreground)', fontFamily: 'inherit', outline: 'none', resize: 'none', lineHeight: 1.5 }} />
+        <button onClick={send} style={{ width: 38, height: 38, borderRadius: '50%', background: input.trim() ? 'var(--accent)' : 'var(--border)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 16, flexShrink: 0 }}>↑</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Profile Screen ────────────────────────────────────────────────────────────
+
+function ProfileScreen({ setScreen }) {
+  const [activeTab, setActiveTab] = useState('posts');
+  const { cardLayout } = useTweaks();
+  const userPosts = SAMPLE_POSTS.filter(p => !p.anon).slice(0, 3);
+  return (
+    <ContentShell withNav screen="profile" setScreen={setScreen}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, marginBottom: 28 }}>
+        <Avatar name="Aryan Mehta" size={68} />
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: 'var(--foreground)', letterSpacing: '-0.3px' }}>Aryan Mehta</h1>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>@aryan.mehta</span>
+          </div>
+          <p style={{ margin: '0 0 12px', fontSize: 14, color: 'var(--muted)', lineHeight: 1.5 }}>3rd year CSE · Thapar, Patiala. Into systems programming and bad cricket takes.</p>
+          <div style={{ display: 'flex', gap: 20 }}>
+            {[['Posts',24],['Upvotes','1.2k'],['Communities',3]].map(([label, val]) => (
+              <div key={label}><div style={{ fontSize: 16, fontWeight: 600, color: 'var(--foreground)' }}>{val}</div><div style={{ fontSize: 12, color: 'var(--muted)' }}>{label}</div></div>
+            ))}
+          </div>
+        </div>
+        <Btn variant="secondary" size="sm">Edit profile</Btn>
+      </div>
+      <Divider />
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', margin: '0 0 20px' }}>
+        {[['posts','Posts'],['anonymous','Anonymous']].map(([id, label]) => (
+          <button key={id} onClick={() => setActiveTab(id)} style={{ padding: '12px 0', marginRight: 24, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: activeTab === id ? 600 : 400, color: activeTab === id ? 'var(--foreground)' : 'var(--muted)', borderBottom: activeTab === id ? '2px solid var(--foreground)' : '2px solid transparent', marginBottom: -1 }}>{label}</button>
+        ))}
+      </div>
+      {activeTab === 'posts'
+        ? <div style={cardLayout === 'open' ? {} : { display: 'flex', flexDirection: 'column', gap: 10 }}>{userPosts.map(post => <PostCard key={post.id} post={post} onClick={() => setScreen('post-detail')} />)}</div>
+        : <div style={{ padding: '40px 0', textAlign: 'center', fontSize: 13, color: 'var(--muted)', lineHeight: 1.7 }}>Anonymous posts are only visible to you.<br /><span style={{ opacity: 0.7 }}>You have 4 anonymous posts.</span></div>}
+      <div style={{ marginTop: 36 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14 }}>Communities</div>
+        {SAMPLE_COMMUNITIES.slice(0, 3).map((c, i) => (
+          <div key={c.id} onClick={() => setScreen('chat')} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderTop: i > 0 ? '1px solid var(--border)' : 'none', cursor: 'pointer' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--card)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>{c.category === 'Technical' ? '⌨' : c.category === 'Cultural' ? '♪' : '⚽'}</div>
+            <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)' }}>{c.name}</div><div style={{ fontSize: 12, color: 'var(--muted)' }}>{c.members} members</div></div>
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: 36, paddingTop: 24, borderTop: '1px solid var(--border)', display: 'flex', gap: 16 }}>
+        {['Account settings','Privacy','Sign out'].map((item, i) => (
+          <button key={item} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, color: i === 2 ? '#C0392B' : 'var(--muted)', padding: 0, textDecoration: 'underline', textUnderlineOffset: 3 }}>{item}</button>
+        ))}
+      </div>
+    </ContentShell>
+  );
+}
+
+// ── Tweaks Panel ──────────────────────────────────────────────────────────────
+function TweaksPanel({ tweaks, setTweaks, visible }) {
+  if (!visible) return null;
+  const row = (label, key, options) => (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#888', marginBottom: 7 }}>{label}</div>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {options.map(([val, lbl]) => (
+          <button key={val} onClick={() => { const next = { ...tweaks, [key]: val }; setTweaks(next); window.parent.postMessage({ type: '__edit_mode_set_keys', edits: next }, '*'); }}
+            style={{ padding: '5px 11px', borderRadius: 7, border: `1px solid ${tweaks[key] === val ? '#fff' : 'rgba(255,255,255,.15)'}`, background: tweaks[key] === val ? 'rgba(255,255,255,.18)' : 'transparent', color: tweaks[key] === val ? '#fff' : 'rgba(255,255,255,.6)', fontSize: 12, fontWeight: tweaks[key] === val ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
+            {lbl}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+  return (
+    <div style={{ position: 'fixed', bottom: 24, right: 24, width: 260, background: '#1A1917', border: '1px solid rgba(255,255,255,.12)', borderRadius: 14, padding: '20px 18px', zIndex: 1000, boxShadow: '0 8px 32px rgba(0,0,0,.4)' }}>
+      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,.9)', marginBottom: 18 }}>Tweaks</div>
+      {row('Card layout', 'cardLayout', [['open','Open'],['bordered','Bordered'],['filled','Filled']])}
+      {row('Anonymous style', 'anonStyle', [['badge','Badge'],['ghost','Ghost'],['inline','Inline']])}
+      {row('Accent color', 'accentColor', [['sage','Sage'],['navy','Navy'],['terra','Terra']])}
+    </div>
+  );
+}
+
+// ── Screen registry ───────────────────────────────────────────────────────────
+const SCREENS = [
+  { id: 'login',           label: 'Login / Sign Up',  group: 'Auth' },
+  { id: 'onboarding',      label: 'Onboarding',        group: 'Auth' },
+  { id: 'forgot-password', label: 'Forgot Password',   group: 'Auth' },
+  { id: 'reset-password',  label: 'Reset Password',    group: 'Auth' },
+  { id: 'campus-feed',     label: 'Campus Feed',       group: 'Feed' },
+  { id: 'global-feed',     label: 'Global Feed',       group: 'Feed' },
+  { id: 'post-detail',     label: 'Post Detail',       group: 'Feed' },
+  { id: 'create-post',     label: 'Create Post',       group: 'Feed' },
+  { id: 'communities',     label: 'Communities',       group: 'Communities' },
+  { id: 'chat',            label: 'Community Chat',    group: 'Communities' },
+  { id: 'profile',         label: 'Profile',           group: 'Profile' },
+];
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+function Sidebar({ screen, setScreen, dark, setDark }) {
+  const groups = [...new Set(SCREENS.map(s => s.group))];
+  return (
+    <div style={{ width: 210, flexShrink: 0, background: '#111110', borderRight: '1px solid rgba(255,255,255,.07)', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'auto' }}>
+      <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', letterSpacing: '-0.2px' }}>Peerly</div>
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,.35)', marginTop: 2 }}>Design Reference</div>
+      </div>
+      <div style={{ flex: 1, padding: '12px 0' }}>
+        {groups.map(g => (
+          <div key={g}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.25)', padding: '10px 18px 5px' }}>{g}</div>
+            {SCREENS.filter(s => s.group === g).map(s => (
+              <button key={s.id} onClick={() => setScreen(s.id)}
+                style={{ width: '100%', textAlign: 'left', padding: '7px 18px', background: screen === s.id ? 'rgba(255,255,255,.09)' : 'none', border: 'none', borderLeft: screen === s.id ? '2px solid #4CAF7D' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, color: screen === s.id ? '#fff' : 'rgba(255,255,255,.5)', fontWeight: screen === s.id ? 500 : 400 }}>
+                {s.label}
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div style={{ padding: '14px 18px', borderTop: '1px solid rgba(255,255,255,.07)' }}>
+        <button onClick={() => setDark(!dark)} style={{ width: '100%', padding: '7px 10px', borderRadius: 8, background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.1)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, color: 'rgba(255,255,255,.6)' }}>
+          {dark ? '☀ Light mode' : '☽ Dark mode'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── App ───────────────────────────────────────────────────────────────────────
+function App() {
+  const [screen, setScreen] = useState(() => { try { return localStorage.getItem('peerly_screen') || 'campus-feed'; } catch { return 'campus-feed'; } });
+  const [dark, setDark] = useState(() => { try { return localStorage.getItem('peerly_dark') === 'true'; } catch { return false; } });
+  const [tweaksVisible, setTweaksVisible] = useState(false);
+  const [tweaks, setTweaks] = useState(() => { try { return { ...TWEAK_DEFAULTS, ...JSON.parse(localStorage.getItem('peerly_tweaks') || '{}') }; } catch { return TWEAK_DEFAULTS; } });
+
+  useEffect(() => { try { localStorage.setItem('peerly_screen', screen); } catch {} }, [screen]);
+  useEffect(() => { document.documentElement.classList.toggle('dark', dark); try { localStorage.setItem('peerly_dark', dark); } catch {} }, [dark]);
+
+  useEffect(() => {
+    const accentMap = { sage: dark ? '#4CAF7D' : '#2D6A4F', navy: dark ? '#5B8FCC' : '#1E3A5F', terra: dark ? '#D4845A' : '#8B4513' };
+    document.documentElement.style.setProperty('--accent', accentMap[tweaks.accentColor] || accentMap.sage);
+    try { localStorage.setItem('peerly_tweaks', JSON.stringify(tweaks)); } catch {}
+  }, [tweaks, dark]);
+
+  useEffect(() => {
+    const handler = e => {
+      if (e.data?.type === '__activate_edit_mode') setTweaksVisible(true);
+      if (e.data?.type === '__deactivate_edit_mode') setTweaksVisible(false);
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  const isChatFull = screen === 'chat';
+
+  const renderScreen = () => {
+    const p = { setScreen };
+    switch (screen) {
+      case 'login':           return <LoginScreen {...p} />;
+      case 'onboarding':      return <OnboardingScreen {...p} />;
+      case 'forgot-password': return <ForgotPasswordScreen {...p} />;
+      case 'reset-password':  return <ResetPasswordScreen {...p} />;
+      case 'campus-feed':     return <FeedScreen {...p} global={false} />;
+      case 'global-feed':     return <FeedScreen {...p} global={true} />;
+      case 'post-detail':     return <PostDetailScreen {...p} />;
+      case 'create-post':     return <CreatePostScreen {...p} />;
+      case 'communities':     return <CommunitiesScreen {...p} />;
+      case 'chat':            return <ChatScreen {...p} />;
+      case 'profile':         return <ProfileScreen {...p} />;
+      default:                return <FeedScreen {...p} global={false} />;
+    }
+  };
+
+  return (
+    <TweaksContext.Provider value={tweaks}>
+      <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+        <Sidebar screen={screen} setScreen={setScreen} dark={dark} setDark={setDark} />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#0D0D0C' }}>
+          <div style={{ height: 36, flexShrink: 0, display: 'flex', alignItems: 'center', padding: '0 20px', gap: 8, borderBottom: '1px solid rgba(255,255,255,.06)' }}>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,.3)', fontWeight: 500 }}>{SCREENS.find(s => s.id === screen)?.group} /</span>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,.6)', fontWeight: 600 }}>{SCREENS.find(s => s.id === screen)?.label}</span>
+          </div>
+          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: isChatFull ? 'stretch' : 'flex-start', padding: isChatFull ? 0 : '28px 28px 0' }}>
+            <div style={{ width: '100%', maxWidth: isChatFull ? 700 : 900, height: isChatFull ? '100%' : 'auto', maxHeight: isChatFull ? '100%' : 'calc(100vh - 64px)', background: 'var(--background)', borderRadius: isChatFull ? 0 : '12px 12px 0 0', border: isChatFull ? 'none' : '1px solid rgba(255,255,255,.08)', overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+              {renderScreen()}
+            </div>
+          </div>
+        </div>
+        <TweaksPanel tweaks={tweaks} setTweaks={setTweaks} visible={tweaksVisible} />
+      </div>
+    </TweaksContext.Provider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+  <rect width="120" height="80" fill="#141412"/>
+  <rect x="0" y="0" width="28" height="80" fill="#1E1D1B"/>
+  <rect x="6" y="14" width="16" height="2" rx="1" fill="#4CAF7D"/>
+  <rect x="6" y="22" width="12" height="1.5" rx="0.75" fill="#555"/>
+  <rect x="6" y="29" width="14" height="1.5" rx="0.75" fill="#555"/>
+  <rect x="34" y="10" width="60" height="6" rx="1" fill="#2E2D2A"/>
+  <rect x="34" y="22" width="18" height="2" rx="1" fill="#F0EEE8"/>
+  <rect x="34" y="28" width="60" height="1.2" rx="0.6" fill="#2E2D2A"/>
+  <rect x="34" y="34" width="56" height="1.2" rx="0.6" fill="#2E2D2A"/>
+</svg>
+</template>
+</body>
+</html>
