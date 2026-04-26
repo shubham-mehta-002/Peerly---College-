@@ -1,0 +1,50 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(npm install *)",
+      "Bash(grep -E \"\\\\.\\(ts|js\\)$\")",
+      "Bash(rm -rf \"C:\\\\Users\\\\Shubham\\\\Desktop\\\\Peerly new/peerly-backend/src\")",
+      "Bash(rm -rf \"C:\\\\Users\\\\Shubham\\\\Desktop\\\\Peerly new/peerly-frontend/app\")",
+      "Bash(rm -rf \"C:\\\\Users\\\\Shubham\\\\Desktop\\\\Peerly new/peerly-frontend/components\")",
+      "Bash(rm -rf \"C:\\\\Users\\\\Shubham\\\\Desktop\\\\Peerly new/peerly-frontend/hooks\")",
+      "Bash(rm -rf \"C:\\\\Users\\\\Shubham\\\\Desktop\\\\Peerly new/peerly-frontend/lib\")",
+      "Bash(claude mcp *)",
+      "mcp__stitch__list_projects",
+      "Bash(npx jest *)",
+      "Read(//c/Users/Shubham/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/**)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git -C \"C:\\\\Users\\\\Shubham\\\\Desktop\\\\Peerly new\" status)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('jest', {}\\), indent=2\\)\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(node --require ts-node/register -e ' *)",
+      "Bash(npx ts-node -e ' *)",
+      "Bash(sed -i \"s|'../modules/comments/comments.service'|'../modules/comments/comments.service.js'|g\" src/__tests__/comments.service.test.ts)",
+      "Bash(sed -i \"s|'../modules/posts/posts.service'|'../modules/posts/posts.service.js'|g\" src/__tests__/posts.service.test.ts)",
+      "Bash(npm test *)",
+      "Bash(npm list *)",
+      "Bash(node -e \"require\\('google-auth-library'\\)\")",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(python3 *)",
+      "Bash(node *)",
+      "Bash(npm run *)",
+      "Bash(rm -f \"C:/Users/Shubham/Desktop/design_ref.html\")",
+      "Bash(rm -rf \"C:/Users/Shubham/Desktop/design_extracted\")",
+      "mcp__plugin_claude-mem_mcp-search__get_observations",
+      "Bash(xargs grep *)",
+      "Bash(xargs cat *)",
+      "Bash(npm uninstall *)",
+      "WebSearch",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:github.com)",
+      "Skill(update-config)",
+      "Bash(awk '{print \"peerly-frontend/\" $0}')",
+      "Bash(awk 'BEGIN {FS=\"/\"} {indent=\"\"; for\\(i=3; i<NF; i++\\) indent=indent\"  \"; print indent $NF \" — \" $0}')",
+      "Bash(awk '{print \"peerly-backend/\" $0}')"
+    ]
+  },
+  "enabledPlugins": {
+    "claude-mem@thedotmack": true
+  }
+}
