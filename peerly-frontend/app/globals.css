@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --background: #FAFAF8;
+  --foreground: #1A1917;
+  --muted: #706E69;
+  --accent: #2D6A4F;
+  --border: #E2E0DA;
+  --card: #F4F3EF;
+}
+
+html.dark {
+  --background: #141412;
+  --foreground: #F0EEE8;
+  --muted: #9E9B95;
+  --accent: #4CAF7D;
+  --border: #2E2D2A;
+  --card: #1E1D1B;
+}
+
+/* Accent color overrides */
+html[data-accent="navy"]      { --accent: #1E3A5F; }
+html[data-accent="navy"].dark { --accent: #5B8FCC; }
+html[data-accent="terra"]      { --accent: #8B4513; }
+html[data-accent="terra"].dark { --accent: #D4845A; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font-inter, 'Inter'), sans-serif;
+  font-size: 15px;
+  color: var(--foreground);
+  background: var(--background);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, textarea, input, select { font-family: inherit; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
