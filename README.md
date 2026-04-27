@@ -90,6 +90,9 @@ Required env vars:
 ## Scripts
 
 ```bash
+
+
+
 # Backend
 npm run dev      # ts-node-dev hot reload
 npm run build    # tsc → dist/
@@ -102,3 +105,9 @@ npm run dev      # Next.js dev server
 npm run build    # production build
 npm run lint     # eslint
 ```
+
+
+https://github.com/user-attachments/assets/36c6607e-dd6c-4cff-bb11-476712ca0d45
+
+
+
