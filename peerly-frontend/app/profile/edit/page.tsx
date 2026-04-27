@@ -51,7 +51,7 @@ export default function ProfileEditPage() {
       }
       await updateProfile.mutateAsync({
         name: name.trim() || undefined,
-        bio: bio.trim() || undefined,
+        bio: bio.trim(),
         avatar_url,
       });
       router.push('/profile/me');
@@ -132,7 +132,7 @@ export default function ProfileEditPage() {
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           <Btn variant="ghost" size="md" onClick={() => router.back()}>Cancel</Btn>
-          <Btn size="md" disabled={isPending}>
+          <Btn size="md" type="submit" disabled={isPending}>
             {isPending ? (uploading ? 'Uploading…' : 'Saving…') : 'Save changes'}
           </Btn>
         </div>

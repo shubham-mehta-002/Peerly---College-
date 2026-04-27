@@ -1,229 +1,104 @@
-# Peerly — Manual Testing Guide
+# Peerly
 
-Peerly is a multi-tenant college social platform. Each college is isolated — students only see content from their own campus. Two core pillars: **Feed** (Instagram-style posts with voting/comments) and **Communities** (WhatsApp-style real-time group chat).
+A campus-scoped social platform for college communities. Students share posts, vote, discuss in nested comments, and chat in real-time community rooms — all within their own campus.
 
----
+## Tech Stack
 
-## Running the Project
+**Backend** — Express 5 · TypeScript · Supabase (PostgreSQL) · Socket.io · Upstash Redis · Nodemailer · Zod · Winston
+
+**Frontend** — Next.js 16 · React 19 · Tailwind CSS v4 · TanStack Query · Axios · Cloudinary
+
+## Features
+
+- **Multi-tenant auth** — Campus-scoped accounts with email OTP verification and Google OAuth. Custom JWT, password reset via email.
+- **Feed** — Personal campus feed and a global cross-campus feed. Infinite scroll, skeleton loading states.
+- **Posts** — Rich posts with image carousels (Cloudinary), upvote/downvote, nested comments up to 4 levels deep with collapsible threads.
+- **Communities** — Campus communities with real-time chat via Socket.io. Join-gated message history, infinite scroll with date separators, live typing indicators.
+- **Profiles** — Public user profiles, editable profile pages, avatar uploads.
+- **Admin panel** — Domain/campus management, college administration.
+
+## Project Structure
+
+```
+peerly-backend/    Express 5 API + Socket.io server
+peerly-frontend/   Next.js 16 app
+```
+
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- npm 9+
+- Node.js 20+
+- A Supabase project
+- Upstash Redis instance
+- Cloudinary account
+- Gmail account (for transactional email)
 
-### 1. Backend
+### Backend
 
 ```bash
 cd peerly-backend
+cp .env.example .env   # fill in your values
 npm install
 npm run dev
 ```
 
-Backend runs at: `http://localhost:5000`  
-Health check: `http://localhost:5000/health`
+Required env vars:
 
-### 2. Frontend
+| Variable | Description |
+|---|---|
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (bypasses RLS) |
+| `JWT_SECRET` | Secret for signing JWTs (min 32 chars) |
+| `FRONTEND_URL` | Frontend origin (for CORS) |
+| `PORT` | Server port (default 5000) |
+| `GMAIL_USER` | Gmail address for sending email |
+| `GMAIL_APP_PASSWORD` | Gmail app password |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
+| `REDIS_URL` | Redis connection URL (default `redis://localhost:6379`) |
 
-Open a **new terminal**:
+### Frontend
 
 ```bash
 cd peerly-frontend
+cp .env.example .env.local   # fill in your values
 npm install
 npm run dev
 ```
 
-Frontend runs at: `http://localhost:3000`
+Required env vars:
 
-> Both must be running simultaneously for the app to work.
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+| `NEXT_PUBLIC_API_URL` | Backend base URL |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth client ID (optional — disables Google button if absent) |
 
----
+## Architecture Notes
 
-## Core Functionalities
+**Auth** — JWT stored in `localStorage` as `peerly_token`. The Axios instance in `lib/api.ts` attaches it on every request. On 401 it clears the token and redirects to `/auth/login`.
 
-| Area | What It Does |
-|------|-------------|
-| **Auth** | Email/password signup + login, Google OAuth, email domain gating (one domain = one college), OTP verification, password reset |
-| **Onboarding** | First-time campus selection and profile setup wizard |
-| **Feed** | Campus-scoped post feed with hot/new/top sorting, upvote/downvote, image support |
-| **Global Feed** | Cross-college post discovery (read-only) |
-| **Posts** | Create, view, delete posts with images; threaded comments up to 4 levels deep |
-| **Comments** | Nested replies, timestamps, collapsible threads |
-| **Communities** | Create/join/leave chat groups; member cap 200; role-based access (owner/mod/member) |
-| **Community Chat** | Real-time messaging via WebSocket, image sharing, typing indicators, infinite scroll message history |
-| **Profile** | View/edit display name, bio, avatar; view any user's public profile |
-| **Admin** | Manage colleges, view platform-wide data (admin-only) |
+**Multi-tenancy** — Every content table is scoped by `campus_id`. The auth middleware verifies the JWT, fetches the user profile, and attaches `req.user` (including `campusId`) to every request.
 
----
+**Supabase clients** — The backend uses two clients: `supabaseAdmin` (service role, bypasses RLS) for privileged ops and `supabaseAnon` (anon key) for user-scoped queries. Never use `supabaseAdmin` where `supabaseAnon` is sufficient.
 
-## Pages & What to Test
+**Real-time** — Community chat runs over Socket.io WebSockets, not Supabase Realtime.
 
-### `/` — Home / Landing
+**Images** — Compressed to under 1 MB on the frontend before upload to Cloudinary. Only the returned URL is stored in Supabase.
 
-- [ ] Loads without errors
-- [ ] Redirects logged-in users to `/feed`
-- [ ] Redirects unauthenticated users to `/auth/login`
+## Scripts
 
----
+```bash
+# Backend
+npm run dev      # ts-node-dev hot reload
+npm run build    # tsc → dist/
+npm start        # run compiled output
+npm test         # jest
+npm run seed     # seed database
 
-### `/auth/login` — Login
-
-- [ ] Login with valid email + password → redirected to `/feed`
-- [ ] Login with wrong password → error message shown, page does **not** reload
-- [ ] Login with unregistered email → appropriate error shown
-- [ ] "Forgot password?" link navigates to `/auth/forgot-password`
-- [ ] Google OAuth button initiates OAuth flow
-
----
-
-### `/auth/forgot-password` — Forgot Password
-
-- [ ] Submit registered email → success message shown
-- [ ] Submit unregistered email → appropriate error shown
-- [ ] Reset email is received with a working link
-
----
-
-### `/auth/reset-password` — Reset Password
-
-- [ ] Accessible only via the link in the reset email
-- [ ] Submit new password → success, redirected to login
-- [ ] Submit mismatched passwords → validation error
-- [ ] Expired/invalid token → error message shown
-
----
-
-### `/onboarding` — Onboarding Wizard
-
-- [ ] Shown only to users who haven't completed setup
-- [ ] Campus selection works — dropdown/search populated
-- [ ] Submitting incomplete form shows validation errors
-- [ ] Completing onboarding redirects to `/feed`
-- [ ] Already-onboarded users are redirected away from this page
-
----
-
-### `/feed` — Campus Feed
-
-- [ ] Posts load for the user's campus only
-- [ ] Skeleton loading state shown while fetching
-- [ ] Sorting: Hot / New / Top tabs all work and show different ordering
-- [ ] Upvote / downvote on a post updates the count
-- [ ] Voting state persists on page refresh
-- [ ] Empty state shown when no posts exist
-- [ ] Clicking a post navigates to `/posts/[id]`
-- [ ] "+ Post" button navigates to post creation
-
----
-
-### `/global-feed` — Global Feed
-
-- [ ] Posts from multiple colleges visible
-- [ ] Campus badge/label shows which college each post is from
-- [ ] Voting and interaction same as campus feed
-- [ ] Empty state shown if no global posts
-
----
-
-### `/posts/new` or `/create-post` — Create Post
-
-- [ ] Text-only post can be created
-- [ ] Post with image: image uploads, preview shown before submit
-- [ ] Image > 1MB is compressed automatically before upload
-- [ ] Submitting empty form shows validation error
-- [ ] Successful post creation redirects to feed or post detail
-- [ ] Newly created post appears in feed
-
----
-
-### `/posts/[id]` — Post Detail + Comments
-
-- [ ] Post content (text + image if any) displays correctly
-- [ ] Upvote/downvote works
-- [ ] Comments load with correct nesting (up to 4 levels deep)
-- [ ] Deeply nested replies (level 4+) are flattened, not indented further
-- [ ] Comment threads are collapsible
-- [ ] Reply to a comment works → reply appears nested under parent
-- [ ] Timestamps shown on comments
-- [ ] Author name shown on post and each comment
-- [ ] Post author can delete their own post
-- [ ] Skeleton shown while post/comments load
-
----
-
-### `/communities` — Community List
-
-- [ ] All campus communities listed
-- [ ] Joined communities visually distinguished from non-joined
-- [ ] "Create community" option available
-- [ ] Clicking a community navigates to `/communities/[id]`
-- [ ] Skeleton shown while loading
-
----
-
-### `/communities/[id]` — Community Chat
-
-- [ ] Non-members see a **join gate** (lock screen with join button)
-- [ ] Joining a community unlocks the chat
-- [ ] Empty state shown when no messages yet
-- [ ] Messages load (latest 30 first), older messages load on scroll up
-- [ ] Scroll position preserved when older messages load (no jump to top)
-- [ ] Date separators (Today / Yesterday / full date) shown between days
-- [ ] Each message shows HH:MM timestamp
-- [ ] Sending a message appears instantly in chat
-- [ ] Typing indicator appears when another user is typing
-- [ ] Typing indicator disappears after user stops typing (~2 seconds)
-- [ ] Image can be sent in chat
-- [ ] Leaving a community removes access
-
----
-
-### `/profile` — Own Profile
-
-- [ ] Displays current user's name, bio, avatar, and posts
-- [ ] Skeleton shown while loading
-- [ ] Edit button navigates to `/profile/edit`
-
----
-
-### `/profile/edit` — Edit Profile
-
-- [ ] Current values pre-filled in form
-- [ ] Change display name → saved correctly
-- [ ] Change bio → saved correctly
-- [ ] Upload new avatar → preview shown, saved on submit
-- [ ] Submitting unchanged form works without error
-- [ ] Cancel/back returns to profile without saving
-
----
-
-### `/profile/[username]` — Public Profile
-
-- [ ] Displays another user's name, bio, avatar, and posts
-- [ ] No edit button shown
-- [ ] Posts listed belong to that user only
-
----
-
-### `/admin` — Admin Dashboard *(admin accounts only)*
-
-- [ ] Inaccessible to non-admin users (403 or redirect)
-- [ ] Admin can view all colleges
-- [ ] Admin can navigate to `/admin/colleges/[id]` for details
-
----
-
-### `/admin/colleges/[id]` — College Detail *(admin only)*
-
-- [ ] College info displayed correctly
-- [ ] Admin can update college name/domain
-
----
-
-## Cross-Cutting Checks
-
-- [ ] **Dark mode toggle** — applies globally, persists on refresh
-- [ ] **Auth guard** — all protected pages redirect to `/auth/login` when logged out
-- [ ] **Token expiry** — after token expires, user is logged out and redirected to login
-- [ ] **Multi-tenancy isolation** — users from College A cannot see posts or communities from College B
-- [ ] **Responsive layout** — pages usable on mobile screen widths
-- [ ] **No console errors** — browser console clean on each page load
+# Frontend
+npm run dev      # Next.js dev server
+npm run build    # production build
+npm run lint     # eslint
+```

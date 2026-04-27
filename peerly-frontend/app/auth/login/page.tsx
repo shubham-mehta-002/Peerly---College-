@@ -323,14 +323,18 @@ export default function LoginPage() {
               <Btn onClick={handleLogin} disabled={login.isPending || !email || !password} style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}>
                 {login.isPending ? 'Signing in…' : 'Sign in'}
               </Btn>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0' }}>
-                <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-                <span style={{ fontSize: 12, color: 'var(--muted)' }}>or</span>
-                <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-              </div>
-              <Btn variant="secondary" onClick={handleGoogleClick} style={{ width: '100%', justifyContent: 'center' }}>
-                <GoogleIcon /> Continue with Google
-              </Btn>
+              {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0' }}>
+                    <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+                    <span style={{ fontSize: 12, color: 'var(--muted)' }}>or</span>
+                    <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+                  </div>
+                  <Btn variant="secondary" onClick={handleGoogleClick} style={{ width: '100%', justifyContent: 'center' }}>
+                    <GoogleIcon /> Continue with Google
+                  </Btn>
+                </>
+              )}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -350,14 +354,18 @@ export default function LoginPage() {
               <Btn onClick={handleRegister} disabled={register.isPending || !email || !password || password !== confirmPassword} style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}>
                 {register.isPending ? 'Creating account…' : 'Create account'}
               </Btn>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0' }}>
-                <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-                <span style={{ fontSize: 12, color: 'var(--muted)' }}>or</span>
-                <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-              </div>
-              <Btn variant="secondary" onClick={handleGoogleClick} style={{ width: '100%', justifyContent: 'center' }}>
-                <GoogleIcon /> Continue with Google
-              </Btn>
+              {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0' }}>
+                    <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+                    <span style={{ fontSize: 12, color: 'var(--muted)' }}>or</span>
+                    <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+                  </div>
+                  <Btn variant="secondary" onClick={handleGoogleClick} style={{ width: '100%', justifyContent: 'center' }}>
+                    <GoogleIcon /> Continue with Google
+                  </Btn>
+                </>
+              )}
             </div>
           )}
         </div>

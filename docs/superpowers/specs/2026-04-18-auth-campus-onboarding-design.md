@@ -179,7 +179,7 @@ Returns active campuses filtered by user's college domain.
 **Signing:** `JWT_SECRET` env var, expires per `JWT_EXPIRES_IN` (default `7d`)
 
 ---
-
+STOP
 ## 5. Middleware
 
 ### `authenticate.ts`

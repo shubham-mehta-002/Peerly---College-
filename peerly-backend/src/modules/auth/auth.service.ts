@@ -296,7 +296,7 @@ export async function googleAuth(idToken: string) {
 
   const { data: existing } = await supabaseAdmin
     .from('users')
-    .select('id, is_admin')
+    .select('id, is_admin, is_email_verified')
     .eq('email', email)
     .single();
 
@@ -306,6 +306,12 @@ export async function googleAuth(idToken: string) {
   if (existing) {
     userId = existing.id;
     isAdmin = existing.is_admin;
+    if (!existing.is_email_verified) {
+      await supabaseAdmin
+        .from('users')
+        .update({ is_email_verified: true })
+        .eq('id', existing.id);
+    }
   } else {
     const randomPasswordHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 12);
 
