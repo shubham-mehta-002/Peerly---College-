@@ -90,7 +90,7 @@ export default function CommunitiesPage() {
             </label>
             {createError && <div style={{ fontSize: 12, color: '#C0392B' }}>{createError}</div>}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button type="button" onClick={() => { setShowCreate(false); setCreateError(''); }} style={{ padding: '7px 14px', borderRadius: 7, border: '1px solid var(--border)', background: 'transparent', color: 'var(--muted)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button type="button" onClick={() => { setShowCreate(false); setCreateError(''); setNewIsGlobal(false); }} style={{ padding: '7px 14px', borderRadius: 7, border: '1px solid var(--border)', background: 'transparent', color: 'var(--muted)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
               <button type="submit" disabled={createCommunity.isPending || !newName.trim()} style={{ padding: '7px 16px', borderRadius: 7, border: 'none', background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: createCommunity.isPending ? 0.6 : 1 }}>
                 {createCommunity.isPending ? 'Creating…' : 'Create'}
               </button>
