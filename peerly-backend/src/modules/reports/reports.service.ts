@@ -25,10 +25,12 @@ export async function createReport(
     throw new AppError(500, 'Failed to submit report');
   }
 
-  await supabaseAdmin
+  const { error: updateError } = await supabaseAdmin
     .from('posts')
     .update({ report_count: (post as { report_count: number }).report_count + 1 })
     .eq('id', postId);
+
+  if (updateError) throw new AppError(500, 'Failed to update report count');
 }
 
 export async function getAdminReports(options: AdminReportsQuery): Promise<PostReportSummary[]> {
@@ -59,10 +61,12 @@ export async function getAdminReports(options: AdminReportsQuery): Promise<PostR
   if (!posts || posts.length === 0) return [];
 
   const ids = (posts as { id: string }[]).map(p => p.id);
-  const { data: reasons } = await supabaseAdmin
+  const { data: reasons, error: reasonsError } = await supabaseAdmin
     .from('post_reports')
     .select('post_id, reason')
     .in('post_id', ids);
+
+  if (reasonsError) throw new AppError(500, 'Failed to fetch report reasons');
 
   const breakdownMap = new Map<string, Record<string, number>>();
   for (const r of (reasons ?? []) as { post_id: string; reason: string }[]) {
