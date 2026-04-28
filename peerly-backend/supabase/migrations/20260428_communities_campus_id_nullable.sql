@@ -1,0 +1,1 @@
+ALTER TABLE communities ALTER COLUMN campus_id DROP NOT NULL;
