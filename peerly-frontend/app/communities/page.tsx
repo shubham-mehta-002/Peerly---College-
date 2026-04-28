@@ -12,7 +12,8 @@ const CATEGORY_ICON: Record<string, string> = { Technical: '⌨', Cultural: '♪
 
 export default function CommunitiesPage() {
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'discover' | 'joined'>('discover');
+  const [scopeTab, setScopeTab] = useState<'college' | 'global' | 'all'>('all');
+  const [newIsGlobal, setNewIsGlobal] = useState(false);
   const [activeCat, setActiveCat] = useState('All');
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
@@ -31,17 +32,20 @@ export default function CommunitiesPage() {
     if (!newName.trim()) return;
     setCreateError('');
     try {
-      const c = await createCommunity.mutateAsync({ name: newName.trim(), description: newDesc.trim() || undefined, category: newCat });
+      const c = await createCommunity.mutateAsync({ name: newName.trim(), description: newDesc.trim() || undefined, category: newCat, is_global: newIsGlobal });
       setShowCreate(false);
-      setNewName(''); setNewDesc(''); setNewCat('Technical');
+      setNewName(''); setNewDesc(''); setNewCat('Technical'); setNewIsGlobal(false);
       router.push(`/communities/${c.id}`);
     } catch {
       setCreateError('Failed to create community');
     }
   };
 
-  const joined = all.filter(c => c.user_role !== null);
-  const displayed = (activeTab === 'joined' ? joined : all).filter(c =>
+  const scopeFiltered =
+    scopeTab === 'college' ? all.filter(c => !c.is_global) :
+    scopeTab === 'global'  ? all.filter(c => c.is_global) :
+    all;
+  const displayed = scopeFiltered.filter(c =>
     activeCat === 'All' || c.category === activeCat
   );
 
@@ -75,6 +79,15 @@ export default function CommunitiesPage() {
                 </button>
               ))}
             </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: 'var(--muted)' }}>
+              <input
+                type="checkbox"
+                checked={newIsGlobal}
+                onChange={e => setNewIsGlobal(e.target.checked)}
+                style={{ cursor: 'pointer' }}
+              />
+              Make this a global community (visible to all campuses, max 500 members)
+            </label>
             {createError && <div style={{ fontSize: 12, color: '#C0392B' }}>{createError}</div>}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button type="button" onClick={() => { setShowCreate(false); setCreateError(''); }} style={{ padding: '7px 14px', borderRadius: 7, border: '1px solid var(--border)', background: 'transparent', color: 'var(--muted)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
@@ -87,12 +100,12 @@ export default function CommunitiesPage() {
       )}
 
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: 20 }}>
-        {([['discover', 'Discover'], ['joined', `Joined (${joined.length})`]] as const).map(([id, label]) => (
-          <button key={id} onClick={() => setActiveTab(id)} style={{
+        {([['all', 'All'], ['college', 'My College'], ['global', 'Global']] as const).map(([id, label]) => (
+          <button key={id} onClick={() => setScopeTab(id)} style={{
             padding: '10px 0', marginRight: 24, background: 'none', border: 'none', cursor: 'pointer',
-            fontFamily: 'inherit', fontSize: 14, fontWeight: activeTab === id ? 600 : 400,
-            color: activeTab === id ? 'var(--foreground)' : 'var(--muted)',
-            borderBottom: activeTab === id ? '2px solid var(--foreground)' : '2px solid transparent', marginBottom: -1,
+            fontFamily: 'inherit', fontSize: 14, fontWeight: scopeTab === id ? 600 : 400,
+            color: scopeTab === id ? 'var(--foreground)' : 'var(--muted)',
+            borderBottom: scopeTab === id ? '2px solid var(--foreground)' : '2px solid transparent', marginBottom: -1,
           }}>
             {label}
           </button>
@@ -135,6 +148,7 @@ export default function CommunitiesPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
                   <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>{c.name}</span>
                   <span style={{ fontSize: 11, color: 'var(--muted)', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 4, padding: '1px 6px', fontWeight: 500 }}>{c.category}</span>
+                  {c.is_global && <span style={{ fontSize: 11, color: 'var(--accent)', background: 'transparent', border: '1px solid var(--accent)', borderRadius: 4, padding: '1px 6px', fontWeight: 500 }}>Global</span>}
                 </div>
                 <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.description}</p>
               </div>
