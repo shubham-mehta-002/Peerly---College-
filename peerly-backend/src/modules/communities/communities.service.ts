@@ -10,6 +10,9 @@ import type {
   MemberResponse,
 } from './communities.types';
 
+const CAMPUS_CAP = 200;
+const GLOBAL_CAP = 500;
+
 export const ROLE_RANK: Record<CommunityRole, number> = {
   owner: 4, admin: 3, moderator: 2, member: 1,
 };
@@ -69,7 +72,7 @@ export async function getCommunity(communityId: string, userId: string): Promise
 export async function createCommunity(input: CreateCommunityInput, userId: string, campusId: string): Promise<CommunityResponse> {
   const { data: community, error } = await supabaseAdmin
     .from('communities')
-    .insert({ ...input, campus_id: campusId, created_by: userId, member_count: 1 })
+    .insert({ ...input, campus_id: input.is_global ? null : campusId, created_by: userId, member_count: 1 })
     .select('id, name, description, category, is_global, campus_id, member_count, created_at')
     .single();
 
