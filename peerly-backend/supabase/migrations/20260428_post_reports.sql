@@ -11,3 +11,8 @@ CREATE TABLE post_reports (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (post_id, reporter_id)
 );
+
+CREATE INDEX idx_post_reports_reporter_id ON post_reports(reporter_id);
+CREATE INDEX idx_post_reports_reason ON post_reports(reason);
+CREATE INDEX idx_posts_report_count ON posts(report_count DESC) WHERE report_count > 0;
+CREATE INDEX idx_posts_is_hidden ON posts(is_hidden) WHERE is_hidden = true;
