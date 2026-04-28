@@ -14,6 +14,7 @@ import commentsRouter from './modules/comments/comments.router';
 import profileRouter from './modules/profile/profile.router';
 import communitiesRouter from './modules/communities/communities.router';
 import messagesRouter from './modules/messages/messages.router';
+import reportsRouter from './modules/reports/reports.router';
 
 const app = express();
 
@@ -57,6 +58,7 @@ app.use('/api/auth', authLimiter, authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/onboarding', onboardingRouter);
 app.use('/api/posts', postsRouter);
+app.use('/api/posts', reportsRouter);
 app.use('/api/posts/:postId/comments', commentsRouter);
 app.use('/api/profile', profileRouter);
 app.use('/api/communities', communitiesRouter);

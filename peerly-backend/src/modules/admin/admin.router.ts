@@ -8,6 +8,7 @@ import {
   createCampusSchema, updateCampusSchema,
 } from './admin.types';
 import * as controller from './admin.controller';
+import { getAdminReportsHandler, hidePostHandler } from '../reports/reports.controller';
 
 const router = Router();
 router.use(authenticate, requireAdmin);
@@ -23,5 +24,8 @@ router.patch('/colleges/:id/domains/:domainId', validateBody(updateDomainSchema)
 router.post('/colleges/:id/campuses', validateBody(createCampusSchema), controller.createCampus);
 router.get('/colleges/:id/campuses', controller.listCampuses);
 router.patch('/colleges/:id/campuses/:campusId', validateBody(updateCampusSchema), controller.updateCampus);
+
+router.get('/reports', getAdminReportsHandler);
+router.patch('/posts/:id/hide', hidePostHandler);
 
 export default router;
