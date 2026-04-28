@@ -13,10 +13,12 @@ export interface PostReportSummary {
   reason_breakdown: Record<string, number>;
 }
 
+export type ReportReason = 'spam' | 'harassment' | 'misinformation' | 'inappropriate' | 'other';
+
 export function useReportPost() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ postId, reason, customText }: { postId: string; reason: string; customText?: string }) =>
+    mutationFn: ({ postId, reason, customText }: { postId: string; reason: ReportReason; customText?: string }) =>
       api.post(`/api/posts/${postId}/report`, { reason, custom_text: customText }),
     onSuccess: (_data, { postId }) => {
       qc.invalidateQueries({ queryKey: ['post', postId] });
@@ -40,6 +42,10 @@ export function useHidePost() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (postId: string) => api.patch(`/api/admin/posts/${postId}/hide`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-reports'] }),
+    onSuccess: (_data, postId) => {
+      qc.invalidateQueries({ queryKey: ['admin-reports'] });
+      qc.invalidateQueries({ queryKey: ['post', postId] });
+      qc.invalidateQueries({ queryKey: ['feed'] });
+    },
   });
 }
