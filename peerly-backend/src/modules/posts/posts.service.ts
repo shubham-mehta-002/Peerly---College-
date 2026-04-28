@@ -38,7 +38,7 @@ export async function createPost(
   userId: string,
   campusId: string,
   body: CreatePostBody
-): Promise<Omit<PostResponse, 'display_author' | 'user_vote'>> {
+): Promise<Omit<PostResponse, 'display_author' | 'user_vote' | 'is_hidden' | 'user_has_reported'>> {
   const { data: campus } = await supabaseAdmin
     .from('campuses')
     .select('college_id')
@@ -71,7 +71,7 @@ export async function createPost(
 }
 
 const POST_SELECT = `
-  id, author_id, content, image_urls, is_global, is_anonymous,
+  id, author_id, content, image_urls, is_global, is_anonymous, is_hidden,
   upvotes, downvotes, comment_count, heat_score, created_at, campus_id,
   author:profiles!author_id(username, name, avatar_url),
   college:colleges!college_id(name)
@@ -81,7 +81,8 @@ function buildPostResponse(
   post: any,
   feedType: 'campus' | 'global',
   viewerUserId: string,
-  userVote: 'up' | 'down' | null
+  userVote: 'up' | 'down' | null,
+  userHasReported: boolean
 ): PostResponse {
   const author = post.author as { username: string; name: string | null; avatar_url: string | null } | null;
   const collegeName = (post.college as { name: string } | null)?.name ?? 'Unknown';
@@ -96,7 +97,7 @@ function buildPostResponse(
     author?.avatar_url ?? null
   );
   const { author_id: _aid, author: _a, college: _c, downvotes: _d, ...rest } = post;
-  return { ...rest, display_author, user_vote: userVote };
+  return { ...rest, display_author, user_vote: userVote, user_has_reported: userHasReported };
 }
 
 export async function getFeed(
@@ -112,6 +113,7 @@ export async function getFeed(
   } else {
     query = query.eq('is_global', true) as any;
   }
+  query = query.eq('is_hidden', false) as any;
 
   switch (sort) {
     case 'oldest':   query = query.order('created_at', { ascending: true }) as any; break;
@@ -137,8 +139,16 @@ export async function getFeed(
 
   const voteMap = new Map(votes?.map((v: any) => [v.post_id, v.vote_type as 'up' | 'down']));
 
+  const { data: reportedRows } = await supabaseAdmin
+    .from('post_reports')
+    .select('post_id')
+    .eq('reporter_id', viewerUserId)
+    .in('post_id', postIds);
+
+  const reportedSet = new Set((reportedRows ?? []).map((r: any) => r.post_id as string));
+
   return posts.map((p: any) =>
-    buildPostResponse(p, feedType, viewerUserId, voteMap.get(p.id) ?? null)
+    buildPostResponse(p, feedType, viewerUserId, voteMap.get(p.id) ?? null, reportedSet.has(p.id))
   );
 }
 
@@ -158,8 +168,15 @@ export async function getPost(postId: string, viewerUserId: string): Promise<Pos
     .eq('user_id', viewerUserId)
     .single();
 
+  const { data: reportRow } = await supabaseAdmin
+    .from('post_reports')
+    .select('post_id')
+    .eq('post_id', postId)
+    .eq('reporter_id', viewerUserId)
+    .single();
+
   const feedType = post.is_global ? 'global' as const : 'campus' as const;
-  return buildPostResponse(post, feedType, viewerUserId, voteRow?.vote_type as 'up' | 'down' | null ?? null);
+  return buildPostResponse(post, feedType, viewerUserId, voteRow?.vote_type as 'up' | 'down' | null ?? null, !!reportRow);
 }
 
 export async function deletePost(postId: string, userId: string, isAdmin: boolean): Promise<void> {
