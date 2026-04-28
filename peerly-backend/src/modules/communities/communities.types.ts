@@ -28,7 +28,7 @@ export interface CommunityResponse {
   description: string | null;
   category: 'Technical' | 'Cultural' | 'Sports';
   is_global: boolean;
-  campus_id: string;
+  campus_id: string | null;
   member_count: number;
   created_at: string;
   user_role: CommunityRole | null;
