@@ -114,12 +114,13 @@ export async function deleteCommunity(communityId: string, userId: string): Prom
 export async function joinCommunity(communityId: string, userId: string): Promise<void> {
   const { data: community, error: fetchErr } = await supabaseAdmin
     .from('communities')
-    .select('member_count')
+    .select('member_count, is_global')
     .eq('id', communityId)
     .single();
 
   if (fetchErr || !community) throw new AppError(404, 'Community not found');
-  if (community.member_count >= 200) throw new AppError(403, 'Community is full');
+  const cap = community.is_global ? GLOBAL_CAP : CAMPUS_CAP;
+  if (community.member_count >= cap) throw new AppError(403, 'Community is full');
 
   const existing = await getMemberRole(communityId, userId);
   if (existing) throw new AppError(409, 'Already a member');

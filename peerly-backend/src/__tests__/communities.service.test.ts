@@ -41,6 +41,40 @@ describe('joinCommunity', () => {
 
     await expect(joinCommunity('comm-1', 'user-1')).rejects.toMatchObject({ status: 409 });
   });
+
+  it('throws 403 when global community member_count >= 500', async () => {
+    const { joinCommunity } = await import('../modules/communities/communities.service.js');
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'communities') return chain({ single: () => Promise.resolve({ data: { member_count: 500, is_global: true }, error: null }) });
+      if (table === 'community_members') return chain({ single: () => Promise.resolve({ data: null, error: null }) });
+      return chain();
+    });
+
+    await expect(joinCommunity('comm-1', 'user-1')).rejects.toMatchObject({ status: 403, message: 'Community is full' });
+  });
+
+  it('does not throw when global community member_count is 499', async () => {
+    const { joinCommunity } = await import('../modules/communities/communities.service.js');
+    let insertCalled = false;
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'communities') {
+        return chain({
+          single: () => Promise.resolve({ data: { member_count: 499, is_global: true }, error: null }),
+          update: () => chain({ eq: () => Promise.resolve({ error: null }) }),
+        });
+      }
+      if (table === 'community_members') {
+        return chain({
+          single: () => Promise.resolve({ data: null, error: { code: 'PGRST116' } }),
+          insert: () => { insertCalled = true; return Promise.resolve({ error: null }); },
+        });
+      }
+      return chain();
+    });
+
+    await joinCommunity('comm-1', 'user-1');
+    expect(insertCalled).toBe(true);
+  });
 });
 
 describe('leaveCommunity', () => {
