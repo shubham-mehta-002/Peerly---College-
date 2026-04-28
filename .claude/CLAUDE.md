@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Structure
 
 Two packages at the root:
+
 - `peerly-backend/` — Express 5 + TypeScript API
 - `peerly-frontend/` — Next.js 16 + React 19 + Tailwind CSS v4
 
@@ -13,6 +14,7 @@ Full project design and architecture: see `PROJECT.md`.
 ## Commands
 
 **Backend**
+
 ```bash
 cd peerly-backend
 npm run dev       # ts-node-dev with hot reload
@@ -21,6 +23,7 @@ npm start         # run compiled output
 ```
 
 **Frontend**
+
 ```bash
 cd peerly-frontend
 npm run dev       # Next.js dev server
@@ -37,9 +40,10 @@ Next.js 16 has breaking changes from what most training data covers. Before touc
 **Auth:** Custom JWT stored in `localStorage` as `peerly_token`. The axios instance in `lib/api.ts` attaches it automatically. On 401, it clears the token and redirects to `/auth/login`.
 
 **Dual Supabase clients (backend):**
+
 - `supabaseAdmin` (service role) — bypasses RLS, used for privileged operations
 - `supabaseAnon` (anon key) — respects RLS, used for user-scoped queries
-Never use `supabaseAdmin` where `supabaseAnon` is sufficient.
+  Never use `supabaseAdmin` where `supabaseAnon` is sufficient.
 
 **Multi-tenancy:** All content is scoped to `campus_id`. The auth middleware attaches `req.user` (with `campusId`) after verifying the JWT and fetching the profile from Supabase.
 
@@ -58,3 +62,5 @@ Frontend needs: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NE
 ## Hard Rules
 
 **NEVER read `.env` or `.env.*` files.** These contain live credentials. Reference `.env.example` files only for variable names. Do not read, display, or suggest content from actual env files under any circumstances.
+
+**NEVER asl for making git pushes or commits unless the implementation has been completed**"

@@ -41,7 +41,9 @@
       "Skill(update-config)",
       "Bash(awk '{print \"peerly-frontend/\" $0}')",
       "Bash(awk 'BEGIN {FS=\"/\"} {indent=\"\"; for\\(i=3; i<NF; i++\\) indent=indent\"  \"; print indent $NF \" — \" $0}')",
-      "Bash(awk '{print \"peerly-backend/\" $0}')"
+      "Bash(awk '{print \"peerly-backend/\" $0}')",
+      "Bash(npx --prefix ~/.claude/plugins/cache/thedotmack/claude-mem/12.2.0 claude-mem smart-outline \"peerly-frontend/app/communities/page.tsx\")",
+      "Bash(npx eslint *)"
     ]
   },
   "enabledPlugins": {
