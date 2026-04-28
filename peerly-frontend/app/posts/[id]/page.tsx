@@ -8,6 +8,7 @@ import { AnonLabel } from '@/components/ui/anon-label';
 import { Btn } from '@/components/ui/btn';
 import { ImageCarousel } from '@/components/ui/image-carousel';
 import { usePost, usePostVote, type PostResponse } from '@/lib/hooks/useFeed';
+import { ReportModal } from '@/components/ui/report-modal';
 import { useComments, useAddComment, type CommentResponse } from '@/lib/hooks/useComments';
 import { PostDetailSkeleton, CommentsSkeleton } from '@/components/skeletons';
 import { formatRelativeTime } from '@/lib/time';
@@ -119,6 +120,7 @@ function CommentNode({ comment, tree, depth, postId }: CommentNodeProps) {
 function PostContent({ post, postId }: { post: PostResponse; postId: string }) {
   const [comment, setComment] = useState('');
   const [commentsOpen, setCommentsOpen] = useState(true);
+  const [showReport, setShowReport] = useState(false);
   const router = useRouter();
   const { data: comments = [], isLoading: commentsLoading } = useComments(postId);
   const addComment = useAddComment();
@@ -180,6 +182,19 @@ function PostContent({ post, postId }: { post: PostResponse; postId: string }) {
             💬 {post.comment_count} {commentsOpen ? '▾' : '▸'}
           </button>
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {post.user_has_reported && (
+            <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>Reported</span>
+          )}
+          <button
+            onClick={() => { if (!post.user_has_reported) setShowReport(true); }}
+            disabled={post.user_has_reported}
+            style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, cursor: post.user_has_reported ? 'default' : 'pointer', color: 'var(--muted)', fontSize: 12, padding: '4px 10px', fontFamily: 'inherit', opacity: post.user_has_reported ? 0.6 : 1 }}
+          >
+            {post.user_has_reported ? 'Reported' : 'Report'}
+          </button>
+        </div>
+        {showReport && <ReportModal postId={post.id} onClose={() => setShowReport(false)} />}
       </div>
 
       {commentsOpen && (
@@ -223,6 +238,17 @@ export default function PostDetailPage() {
 
   if (postLoading) return <ContentShell><PostDetailSkeleton /></ContentShell>;
   if (!post) return <ContentShell><div style={{ color: '#C0392B', fontSize: 14 }}>Post not found.</div></ContentShell>;
+
+  if (post?.is_hidden) {
+    return (
+      <ContentShell>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 200, textAlign: 'center', gap: 12 }}>
+          <span style={{ fontSize: 32 }}>🚫</span>
+          <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)' }}>This post has been removed by an admin.</p>
+        </div>
+      </ContentShell>
+    );
+  }
 
   return (
     <ContentShell>
