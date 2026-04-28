@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { useTweaks } from '@/lib/context';
 import { Avatar } from './ui/avatar';
 import { AnonLabel } from './ui/anon-label';
 import { ImageCarousel } from './ui/image-carousel';
 import { formatRelativeTime } from '@/lib/time';
 import { usePostVote, type PostResponse } from '@/lib/hooks/useFeed';
+import { ReportModal } from './ui/report-modal';
 
 interface PostCardProps {
   post: PostResponse;
@@ -18,6 +20,8 @@ function isAnonymousDisplay(username: string) { return ANON_NAMES.some(n => user
 export function PostCard({ post, onClick }: PostCardProps) {
   const { cardLayout } = useTweaks();
   const { localVote, localUpvotes, handleVote } = usePostVote(post);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   const isAnon = post.is_anonymous && isAnonymousDisplay(post.display_author.username);
   const displayName = isAnon ? null : (post.display_author.name || post.display_author.username);
@@ -63,7 +67,31 @@ export function PostCard({ post, onClick }: PostCardProps) {
         >↓</button>
         <span style={{ color: 'var(--muted)', fontSize: 13 }}>💬 {post.comment_count}</span>
         {trending && <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Trending</span>}
+        <div style={{ marginLeft: 'auto', position: 'relative' }}>
+          {post.user_has_reported && (
+            <span style={{ fontSize: 11, color: 'var(--muted)', marginRight: 8, fontWeight: 500 }}>Reported</span>
+          )}
+          <button
+            onClick={e => { e.stopPropagation(); setShowMenu(v => !v); }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16, padding: '0 4px', lineHeight: 1 }}
+          >⋯</button>
+          {showMenu && (
+            <>
+              <div onClick={e => { e.stopPropagation(); setShowMenu(false); }} style={{ position: 'fixed', inset: 0, zIndex: 20 }} />
+              <div style={{ position: 'absolute', right: 0, top: '100%', zIndex: 30, marginTop: 4, background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.1)', minWidth: 130, overflow: 'hidden' }}>
+                <button
+                  onClick={e => { e.stopPropagation(); setShowMenu(false); if (!post.user_has_reported) setShowReport(true); }}
+                  disabled={post.user_has_reported}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', cursor: post.user_has_reported ? 'default' : 'pointer', fontSize: 13, color: post.user_has_reported ? 'var(--muted)' : 'var(--foreground)', fontFamily: 'inherit' }}
+                >
+                  {post.user_has_reported ? 'Reported' : 'Report post'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
+      {showReport && <ReportModal postId={post.id} onClose={() => setShowReport(false)} />}
     </div>
   );
 }
