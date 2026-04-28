@@ -23,7 +23,7 @@ describe('joinCommunity', () => {
   it('throws 403 when member_count >= 200', async () => {
     const { joinCommunity } = await import('../modules/communities/communities.service.js');
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'communities') return chain({ single: () => Promise.resolve({ data: { member_count: 200 }, error: null }) });
+      if (table === 'communities') return chain({ single: () => Promise.resolve({ data: { member_count: 200, is_global: false }, error: null }) });
       if (table === 'community_members') return chain({ single: () => Promise.resolve({ data: null, error: null }) });
       return chain();
     });
