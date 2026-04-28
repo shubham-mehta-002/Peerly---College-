@@ -10,6 +10,7 @@ export interface PostResponse {
   image_urls: string[];
   is_global: boolean;
   is_anonymous: boolean;
+  is_hidden: boolean;
   upvotes: number;
   comment_count: number;
   heat_score: number;
@@ -17,6 +18,7 @@ export interface PostResponse {
   campus_id: string;
   display_author: { username: string; name: string | null; avatar_url: string | null };
   user_vote: 'up' | 'down' | null;
+  user_has_reported: boolean;
 }
 
 type SortOption = 'latest' | 'oldest' | 'upvoted' | 'trending';
