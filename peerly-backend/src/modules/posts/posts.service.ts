@@ -218,9 +218,7 @@ export async function getUserPosts(
     .eq('is_hidden', false)
     .order('created_at', { ascending: false });
 
-  if (!anonymous) {
-    query = (query as any).eq('is_anonymous', false);
-  }
+  query = (query as any).eq('is_anonymous', anonymous);
 
   const { data: posts, error } = await (query as any).range(offset, offset + limit - 1);
 
