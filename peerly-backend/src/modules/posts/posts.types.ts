@@ -49,4 +49,5 @@ export interface PostResponse {
   display_author: DisplayAuthor;
   user_vote: 'up' | 'down' | null;
   user_has_reported: boolean;
+  is_own: boolean;
 }

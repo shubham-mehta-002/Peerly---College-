@@ -19,6 +19,7 @@ export interface PostResponse {
   display_author: { username: string; name: string | null; avatar_url: string | null };
   user_vote: 'up' | 'down' | null;
   user_has_reported: boolean;
+  is_own: boolean;
 }
 
 type SortOption = 'latest' | 'oldest' | 'upvoted' | 'trending';

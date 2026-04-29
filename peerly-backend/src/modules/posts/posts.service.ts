@@ -97,7 +97,7 @@ function buildPostResponse(
     author?.avatar_url ?? null
   );
   const { author_id: _aid, author: _a, college: _c, downvotes: _d, ...rest } = post;
-  return { ...rest, display_author, user_vote: userVote, user_has_reported: userHasReported };
+  return { ...rest, display_author, user_vote: userVote, user_has_reported: userHasReported, is_own: post.author_id === viewerUserId };
 }
 
 export async function getFeed(

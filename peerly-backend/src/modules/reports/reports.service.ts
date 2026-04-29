@@ -10,11 +10,12 @@ export async function createReport(
 ): Promise<void> {
   const { data: post, error: postErr } = await supabaseAdmin
     .from('posts')
-    .select('id, report_count')
+    .select('id, author_id, report_count')
     .eq('id', postId)
     .single();
 
   if (postErr || !post) throw new AppError(404, 'Post not found');
+  if ((post as { author_id: string }).author_id === reporterId) throw new AppError(403, 'Cannot report your own post');
 
   const { error: insertError } = await supabaseAdmin
     .from('post_reports')
