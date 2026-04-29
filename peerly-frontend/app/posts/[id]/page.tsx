@@ -182,18 +182,20 @@ function PostContent({ post, postId }: { post: PostResponse; postId: string }) {
             💬 {post.comment_count} {commentsOpen ? '▾' : '▸'}
           </button>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {post.user_has_reported && (
-            <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>Reported</span>
-          )}
-          <button
-            onClick={() => { if (!post.user_has_reported) setShowReport(true); }}
-            disabled={post.user_has_reported}
-            style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, cursor: post.user_has_reported ? 'default' : 'pointer', color: 'var(--muted)', fontSize: 12, padding: '4px 10px', fontFamily: 'inherit', opacity: post.user_has_reported ? 0.6 : 1 }}
-          >
-            {post.user_has_reported ? 'Reported' : 'Report'}
-          </button>
-        </div>
+        {!post.is_own && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {post.user_has_reported && (
+              <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>Reported</span>
+            )}
+            <button
+              onClick={() => { if (!post.user_has_reported) setShowReport(true); }}
+              disabled={post.user_has_reported}
+              style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, cursor: post.user_has_reported ? 'default' : 'pointer', color: 'var(--muted)', fontSize: 12, padding: '4px 10px', fontFamily: 'inherit', opacity: post.user_has_reported ? 0.6 : 1 }}
+            >
+              {post.user_has_reported ? 'Reported' : 'Report'}
+            </button>
+          </div>
+        )}
         {showReport && <ReportModal postId={post.id} onClose={() => setShowReport(false)} />}
       </div>
 
