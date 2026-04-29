@@ -6,14 +6,14 @@ const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 465,
   secure: true,
-  family: 4,
+  family: 4, // force IPv4 — Render cannot reach Gmail over IPv6
   auth: {
     user: config.GMAIL_USER,
     pass: config.GMAIL_APP_PASSWORD,
   },
   connectionTimeout: 10000,
   socketTimeout: 10000,
-});
+} as any);
 
 export async function sendPasswordResetEmail(to: string, resetLink: string): Promise<void> {
   try {
