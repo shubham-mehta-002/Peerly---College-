@@ -4,8 +4,9 @@ import { logger } from './logger';
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
+  port: 587,
+  secure: false,
+  requireTLS: true,
   family: 4, // force IPv4 — Render cannot reach Gmail over IPv6
   auth: {
     user: config.GMAIL_USER,
