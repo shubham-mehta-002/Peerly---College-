@@ -17,8 +17,15 @@ export const voteSchema = z.object({
   vote_type: z.enum(['up', 'down']).nullable(),
 });
 
+export const userPostsQuerySchema = z.object({
+  anonymous: z.enum(['true', 'false']).optional().transform(v => v === 'true'),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+
 export type CreatePostBody = z.infer<typeof createPostSchema>;
 export type FeedQuery = z.infer<typeof feedQuerySchema>;
+export type UserPostsQuery = z.infer<typeof userPostsQuerySchema>;
 export type VoteBody = z.infer<typeof voteSchema>;
 
 export interface DisplayAuthor {

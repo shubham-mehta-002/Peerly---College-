@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import * as postsService from './posts.service';
-import { feedQuerySchema } from './posts.types';
+import { feedQuerySchema, userPostsQuerySchema } from './posts.types';
 
 export async function createPost(req: Request, res: Response): Promise<void> {
   const post = await postsService.createPost(req.user.userId, req.user.campusId!, req.body);
@@ -42,4 +42,10 @@ export async function deletePost(req: Request, res: Response): Promise<void> {
 export async function vote(req: Request, res: Response): Promise<void> {
   await postsService.castVote(req.params.id as string, req.user.userId, req.body.vote_type);
   res.status(200).json({ ok: true });
+}
+
+export async function getUserPosts(req: Request, res: Response): Promise<void> {
+  const query = userPostsQuerySchema.parse(req.query);
+  const posts = await postsService.getUserPosts(req.params.username as string, req.user.userId, query);
+  res.json(posts);
 }

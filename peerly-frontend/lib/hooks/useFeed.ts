@@ -116,6 +116,14 @@ export function usePostVote(post: PostResponse) {
   return { localVote, localUpvotes, handleVote };
 }
 
+export function useUserPosts(username: string, anonymous = false) {
+  return useQuery<PostResponse[]>({
+    queryKey: ['user-posts', username, anonymous],
+    queryFn: () => api.get(`/api/posts/user/${username}${anonymous ? '?anonymous=true' : ''}`).then(r => r.data),
+    enabled: !!username,
+  });
+}
+
 export function useCreatePost() {
   const qc = useQueryClient();
   return useMutation({

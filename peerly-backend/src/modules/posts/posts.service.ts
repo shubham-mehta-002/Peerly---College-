@@ -1,7 +1,7 @@
 import { supabaseAdmin } from '../../lib/supabase';
 import { AppError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
-import { CreatePostBody, FeedQuery, PostResponse, DisplayAuthor } from './posts.types';
+import { CreatePostBody, FeedQuery, UserPostsQuery, PostResponse, DisplayAuthor } from './posts.types';
 
 export function computeHeatScore(
   upvotes: number,
@@ -191,6 +191,67 @@ export async function deletePost(postId: string, userId: string, isAdmin: boolea
 
   await supabaseAdmin.from('posts').delete().eq('id', postId);
   logger.info('Post deleted', { postId, userId });
+}
+
+export async function getUserPosts(
+  username: string,
+  viewerUserId: string,
+  options: UserPostsQuery
+): Promise<PostResponse[]> {
+  const { anonymous, page, limit } = options;
+  const offset = (page - 1) * limit;
+
+  const { data: author, error: authorErr } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .eq('username', username)
+    .single();
+
+  if (authorErr || !author) throw new AppError(404, 'User not found');
+
+  if (anonymous && author.id !== viewerUserId) throw new AppError(403, 'Forbidden');
+
+  let query = supabaseAdmin
+    .from('posts')
+    .select(POST_SELECT)
+    .eq('author_id', author.id)
+    .eq('is_hidden', false)
+    .order('created_at', { ascending: false });
+
+  if (!anonymous) {
+    query = (query as any).eq('is_anonymous', false);
+  }
+
+  const { data: posts, error } = await (query as any).range(offset, offset + limit - 1);
+
+  if (error) {
+    logger.error('Failed to fetch user posts', { error: error.message, username });
+    throw new AppError(500, 'Failed to fetch user posts');
+  }
+  if (!posts || posts.length === 0) return [];
+
+  const postIds = posts.map((p: any) => p.id);
+
+  const { data: votes } = await supabaseAdmin
+    .from('post_votes')
+    .select('post_id, vote_type')
+    .eq('user_id', viewerUserId)
+    .in('post_id', postIds);
+
+  const voteMap = new Map(votes?.map((v: any) => [v.post_id, v.vote_type as 'up' | 'down']));
+
+  const { data: reportedRows } = await supabaseAdmin
+    .from('post_reports')
+    .select('post_id')
+    .eq('reporter_id', viewerUserId)
+    .in('post_id', postIds);
+
+  const reportedSet = new Set((reportedRows ?? []).map((r: any) => r.post_id as string));
+
+  return posts.map((p: any) => {
+    const feedType = p.is_global ? 'global' as const : 'campus' as const;
+    return buildPostResponse(p, feedType, viewerUserId, voteMap.get(p.id) ?? null, reportedSet.has(p.id));
+  });
 }
 
 export async function castVote(

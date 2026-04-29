@@ -9,6 +9,7 @@ router.use(authenticate);
 
 router.get('/campus', controller.getCampusFeed);
 router.get('/global', controller.getGlobalFeed);
+router.get('/user/:username', controller.getUserPosts);
 router.get('/:id', controller.getPost);
 router.post('/', validateBody(createPostSchema), controller.createPost);
 router.delete('/:id', controller.deletePost);

@@ -8,7 +8,9 @@ import { Btn } from '@/components/ui/btn';
 import { Divider } from '@/components/ui/divider';
 import { useMe, useLogout } from '@/lib/hooks/useAuth';
 import { useMyProfile, usePublicProfile } from '@/lib/hooks/useProfile';
+import { useUserPosts } from '@/lib/hooks/useFeed';
 import { ProfileSkeleton } from '@/components/skeletons';
+import { PostCard } from '@/components/post-card';
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'posts' | 'anonymous'>('posts');
@@ -24,6 +26,13 @@ export default function ProfilePage() {
 
   const isLoading = meLoading || (isSelf ? myLoading : pubLoading);
   const profile = isSelf ? myProfile : publicProfile;
+
+  const targetUsername = profile?.username ?? '';
+  const { data: posts, isLoading: postsLoading } = useUserPosts(targetUsername, false);
+  const { data: anonPosts, isLoading: anonLoading } = useUserPosts(
+    isSelf ? targetUsername : '',
+    true
+  );
 
   if (isLoading) {
     return <ContentShell><ProfileSkeleton /></ContentShell>;
@@ -72,15 +81,27 @@ export default function ProfilePage() {
       </div>
 
       {activeTab === 'posts' ? (
-        <div style={{ padding: '24px 0', textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: 'var(--muted)' }}>Posts will appear here.</div>
-        </div>
-      ) : (
-        <div style={{ padding: '40px 0', textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.7 }}>
-            Anonymous posts are only visible to you.
+        postsLoading ? (
+          <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: 'var(--muted)' }}>Loading…</div>
+        ) : !posts || posts.length === 0 ? (
+          <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: 'var(--muted)' }}>No posts yet.</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {posts.map(p => <PostCard key={p.id} post={p} />)}
           </div>
-        </div>
+        )
+      ) : (
+        anonLoading ? (
+          <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: 'var(--muted)' }}>Loading…</div>
+        ) : !anonPosts || anonPosts.length === 0 ? (
+          <div style={{ padding: '40px 0', textAlign: 'center', fontSize: 13, color: 'var(--muted)', lineHeight: 1.7 }}>
+            No anonymous posts yet.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {anonPosts.map(p => <PostCard key={p.id} post={p} />)}
+          </div>
+        )
       )}
 
       {isSelf && (
