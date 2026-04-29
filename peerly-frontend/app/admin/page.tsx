@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ContentShell } from '@/components/content-shell';
 import { useAdminColleges, useCreateCollege, useUpdateCollege } from '@/lib/hooks/useAdmin';
 import { useMe } from '@/lib/hooks/useAuth';
-import { useAdminReports, useHidePost, type PostReportSummary } from '@/lib/hooks/useReports';
+import { useAdminReports, useHidePost, useUnhidePost, type PostReportSummary } from '@/lib/hooks/useReports';
 import { formatRelativeTime } from '@/lib/time';
 
 function CollegeRow({
@@ -65,6 +65,7 @@ export default function AdminPage() {
   const [reportPage, setReportPage] = useState(1);
   const { data: reports = [], isLoading: reportsLoading } = useAdminReports(reportFilter || undefined, reportPage);
   const hidePost = useHidePost();
+  const unhidePost = useUnhidePost();
 
   const [showForm, setShowForm] = useState(false);
   const [newName, setNewName] = useState('');
@@ -241,20 +242,33 @@ export default function AdminPage() {
                       ))}
                     </div>
                   </div>
-                  <button
-                    onClick={() => hidePost.mutate(r.id)}
-                    disabled={r.is_hidden || hidePost.isPending}
-                    style={{
-                      flexShrink: 0, padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 500,
-                      fontFamily: 'inherit', cursor: r.is_hidden ? 'default' : 'pointer',
-                      border: r.is_hidden ? '1px solid var(--border)' : '1px solid rgba(192,57,43,.4)',
-                      background: 'transparent',
-                      color: r.is_hidden ? 'var(--muted)' : '#C0392B',
-                      opacity: hidePost.isPending ? 0.6 : 1,
-                    }}
-                  >
-                    {r.is_hidden ? 'Hidden' : 'Hide post'}
-                  </button>
+                  {r.is_hidden ? (
+                    <button
+                      onClick={() => unhidePost.mutate(r.id)}
+                      disabled={unhidePost.isPending}
+                      style={{
+                        flexShrink: 0, padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 500,
+                        fontFamily: 'inherit', cursor: 'pointer',
+                        border: '1px solid var(--border)', background: 'transparent',
+                        color: 'var(--muted)', opacity: unhidePost.isPending ? 0.6 : 1,
+                      }}
+                    >
+                      Unhide
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => hidePost.mutate(r.id)}
+                      disabled={hidePost.isPending}
+                      style={{
+                        flexShrink: 0, padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 500,
+                        fontFamily: 'inherit', cursor: 'pointer',
+                        border: '1px solid rgba(192,57,43,.4)', background: 'transparent',
+                        color: '#C0392B', opacity: hidePost.isPending ? 0.6 : 1,
+                      }}
+                    >
+                      Hide post
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

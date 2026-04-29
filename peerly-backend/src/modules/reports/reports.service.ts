@@ -100,3 +100,14 @@ export async function hidePost(postId: string): Promise<void> {
 
   if (error || !data) throw new AppError(404, 'Post not found');
 }
+
+export async function unhidePost(postId: string): Promise<void> {
+  const { data, error } = await supabaseAdmin
+    .from('posts')
+    .update({ is_hidden: false })
+    .eq('id', postId)
+    .select('id')
+    .single();
+
+  if (error || !data) throw new AppError(404, 'Post not found');
+}

@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { createReport, getAdminReports, hidePost } from './reports.service';
+import { createReport, getAdminReports, hidePost, unhidePost } from './reports.service';
 import { ReportPostSchema, AdminReportsQuerySchema } from './reports.types';
 
 export async function reportPostHandler(req: Request, res: Response): Promise<void> {
@@ -24,5 +24,10 @@ export async function getAdminReportsHandler(req: Request, res: Response): Promi
 
 export async function hidePostHandler(req: Request, res: Response): Promise<void> {
   await hidePost(req.params.id as string);
+  res.json({ success: true });
+}
+
+export async function unhidePostHandler(req: Request, res: Response): Promise<void> {
+  await unhidePost(req.params.id as string);
   res.json({ success: true });
 }

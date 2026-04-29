@@ -49,3 +49,15 @@ export function useHidePost() {
     },
   });
 }
+
+export function useUnhidePost() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (postId: string) => api.patch(`/api/admin/posts/${postId}/unhide`),
+    onSuccess: (_data, postId) => {
+      qc.invalidateQueries({ queryKey: ['admin-reports'] });
+      qc.invalidateQueries({ queryKey: ['post', postId] });
+      qc.invalidateQueries({ queryKey: ['feed'] });
+    },
+  });
+}
