@@ -38,7 +38,7 @@ export async function createPost(
   userId: string,
   campusId: string,
   body: CreatePostBody
-): Promise<Omit<PostResponse, 'display_author' | 'user_vote' | 'is_hidden' | 'user_has_reported'>> {
+): Promise<Omit<PostResponse, 'display_author' | 'user_vote' | 'is_hidden' | 'user_has_reported' | 'is_own'>> {
   const { data: campus } = await supabaseAdmin
     .from('campuses')
     .select('college_id')
