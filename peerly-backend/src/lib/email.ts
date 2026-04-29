@@ -3,14 +3,12 @@ import { config } from '../config';
 import { logger } from './logger';
 
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
+  host: 'smtp-relay.brevo.com',
   port: 587,
   secure: false,
-  requireTLS: true,
-  family: 4, // force IPv4 — Render cannot reach Gmail over IPv6
   auth: {
-    user: config.GMAIL_USER,
-    pass: config.GMAIL_APP_PASSWORD,
+    user: config.BREVO_SMTP_USER,
+    pass: config.BREVO_SMTP_KEY,
   },
   connectionTimeout: 10000,
   socketTimeout: 10000,
@@ -19,7 +17,7 @@ const transporter = nodemailer.createTransport({
 export async function sendPasswordResetEmail(to: string, resetLink: string): Promise<void> {
   try {
     await transporter.sendMail({
-      from: `"Peerly" <${config.GMAIL_USER}>`,
+      from: `"Peerly" <${config.BREVO_SMTP_USER}>`,
       to,
       subject: 'Reset your Peerly password',
       html: `
@@ -37,7 +35,7 @@ export async function sendPasswordResetEmail(to: string, resetLink: string): Pro
 export async function sendOTPEmail(to: string, otp: string): Promise<void> {
   try {
     await transporter.sendMail({
-      from: `"Peerly" <${config.GMAIL_USER}>`,
+      from: `"Peerly" <${config.BREVO_SMTP_USER}>`,
       to,
       subject: 'Verify your Peerly email',
       html: `
