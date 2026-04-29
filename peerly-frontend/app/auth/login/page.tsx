@@ -329,7 +329,15 @@ export default function LoginPage() {
                     <span style={{ fontSize: 12, color: 'var(--muted)' }}>or</span>
                     <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
                   </div>
-                  <div ref={googleLoginBtnRef} style={{ width: '100%', minHeight: 40 }} />
+                  {!googleReady ? (
+                    <div style={{ width: '100%', height: 40, borderRadius: 6, background: 'var(--card)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: 13, opacity: 0.6 }}>
+                      Continue with Google
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                      <div ref={googleLoginBtnRef} />
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -358,7 +366,15 @@ export default function LoginPage() {
                     <span style={{ fontSize: 12, color: 'var(--muted)' }}>or</span>
                     <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
                   </div>
-                  <div ref={googleSignupBtnRef} style={{ width: '100%', minHeight: 40 }} />
+                  {!googleReady ? (
+                    <div style={{ width: '100%', height: 40, borderRadius: 6, background: 'var(--card)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: 13, opacity: 0.6 }}>
+                      Continue with Google
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                      <div ref={googleSignupBtnRef} />
+                    </div>
+                  )}
                 </>
               )}
             </div>
