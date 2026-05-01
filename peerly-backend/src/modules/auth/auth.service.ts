@@ -220,7 +220,12 @@ export async function sendEmailOTP(email: string): Promise<void> {
   const plain = Math.floor(100000 + Math.random() * 900000).toString();
   const otpHash = crypto.createHash('sha256').update(plain).digest('hex');
 
-  await redis.set(`otp:${user.id}`, JSON.stringify({ hash: otpHash }), 'EX', 900);
+  try {
+    await redis.set(`otp:${user.id}`, JSON.stringify({ hash: otpHash }), 'EX', 900);
+  } catch (err: any) {
+    logger.error('Redis OTP store failed', { userId: user.id, message: err?.message });
+    throw new AppError(503, 'OTP service temporarily unavailable. Please try again.');
+  }
 
   await sendOTPEmail(normalizedEmail, plain);
   logger.info('OTP sent via Redis', { userId: user.id });

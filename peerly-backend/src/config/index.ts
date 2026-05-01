@@ -9,8 +9,8 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_EXPIRES_IN: z.string().default('7d'),
   FRONTEND_URL: z.string().url().default('http://localhost:3000'),
-  BREVO_SMTP_USER: z.string().email('BREVO_SMTP_USER must be a valid email'),
-  BREVO_SMTP_KEY: z.string().min(1, 'BREVO_SMTP_KEY is required'),
+  GMAIL_USER: z.string().email('GMAIL_USER must be a valid email'),
+  GMAIL_APP_PASSWORD: z.string().min(1, 'GMAIL_APP_PASSWORD is required'),
   GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID is required'),
   REDIS_URL: z.string().default('redis://localhost:6379')
 });
